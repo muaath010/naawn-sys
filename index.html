@@ -221,7 +221,7 @@
 
     <div id="mainMenu" class="menu-container">
         <button class="main-btn" onclick="showSection('driverLoginSec')">
-             دخول المناديب (النماذج)
+             لوحة المناديب
         </button>
         <button class="main-btn" onclick="showSection('settingsSec')">
              دخول شركاء المطاعم
@@ -229,19 +229,19 @@
     </div>
 
     <div id="driverLoginSec" class="page-section">
-        <h2>دخول المناديب</h2>
+        <h2>دخول المندوب</h2>
         <div class="input-group">
             <label>رقم بطاقة المندوب</label>
-            <input type="text" id="driverCardInput" placeholder="مثال: 001">
+            <input type="text" id="driverCardInput" placeholder="أدخل رقم بطاقتك">
         </div>
-        <button onclick="checkDriverLogin()" class="submit-btn">دخول</button>
-        <button class="back-btn" onclick="goBack()">عودة للقائمة</button>
+        <button onclick="checkDriverLogin()" class="submit-btn">متابعة</button>
+        <button class="back-btn" onclick="goBack()">عودة</button>
     </div>
 
     <div id="driverOptionsSec" class="page-section">
         <h2 id="driverWelcome">أهلاً بك</h2>
-        <button class="main-btn" style="margin-bottom:10px" onclick="showSection('deductionSec')">لوحة الاستقطاعات</button>
-        <button class="main-btn" onclick="showSection('invoiceSec')">لوحة فواتير الطلبات</button>
+        <button class="main-btn" style="margin-bottom:10px" onclick="showSection('deductionSec')">تسجيل استقطاعات</button>
+        <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
     </div>
 
@@ -250,8 +250,9 @@
         <form id="deductionForm" onsubmit="submitDeduction(event)">
             <div class="input-group">
                 <label>اسم المندوب</label>
-                <input type="text" name="driver" id="autoDriverName1" readonly>
+                <input type="text" name="driver" placeholder="اكتب اسمك الثلاثي" required>
             </div>
+            <input type="hidden" name="card_id" id="hiddenCardId1">
             <div class="input-group">
                 <label>عدد الطلبات</label>
                 <input type="number" name="orders_count" required>
@@ -272,7 +273,7 @@
             <button type="submit" class="submit-btn">إرسال البيانات</button>
             <div id="loader1" class="loader"></div>
         </form>
-        <button class="back-btn" onclick="showSection('driverOptionsSec')">عودة للخيارات</button>
+        <button class="back-btn" onclick="showSection('driverOptionsSec')">رجوع</button>
     </div>
 
     <div id="invoiceSec" class="page-section">
@@ -284,12 +285,9 @@
             </div>
             <div class="input-group">
                 <label>اسم المندوب</label>
-                <input type="text" name="driver_name" id="autoDriverName2" readonly>
+                <input type="text" name="driver_name" placeholder="اكتب اسمك الثلاثي" required>
             </div>
-            <div class="input-group">
-                <label>رقم بطاقة المندوب</label>
-                <input type="text" name="card_id" id="autoCardId" readonly>
-            </div>
+            <input type="hidden" name="card_id" id="hiddenCardId2">
             <div class="input-group">
                 <label>مكان التوصيل</label>
                 <input type="text" name="location" required>
@@ -310,7 +308,7 @@
             <button type="submit" class="submit-btn">إرسال الفاتورة</button>
             <div id="loader2" class="loader"></div>
         </form>
-        <button class="back-btn" onclick="showSection('driverOptionsSec')">عودة للخيارات</button>
+        <button class="back-btn" onclick="showSection('driverOptionsSec')">رجوع</button>
     </div>
 
     <div id="settingsSec" class="page-section">
@@ -338,13 +336,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDqFvFNquVa5SkYkLmeY89RaA6OxKgfXBe9hfGrr1G06pvqzYN2LPLjXmcjvcuVr7zRg/exec"; 
-        // قائمة المناديب (يمكنك إضافة المزيد هنا)
-        const DRIVERS_LIST = {
-            "001": "أحمد البلوشي",
-            "002": "محمد العبري",
-            "003": "سالم السعدي"
-        };
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXq_mZvFybFZxDzXEug2EQ4anPv96bU_nIA_LNxWi390eEgze3bbp2CYvhJmiZi3Y8PA/exec";
 
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
@@ -359,15 +351,13 @@
 
         function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
-            if (DRIVERS_LIST[cardId]) {
-                const driverName = DRIVERS_LIST[cardId];
-                document.getElementById('driverWelcome').innerText = "أهلاً بك: " + driverName;
-                document.getElementById('autoDriverName1').value = driverName;
-                document.getElementById('autoDriverName2').value = driverName;
-                document.getElementById('autoCardId').value = cardId;
+            if (cardId !== "") {
+                document.getElementById('hiddenCardId1').value = cardId;
+                document.getElementById('hiddenCardId2').value = cardId;
+                document.getElementById('driverWelcome').innerText = "رقم البطاقة: " + cardId;
                 showSection('driverOptionsSec');
             } else {
-                alert("رقم البطاقة غير صحيح ❌");
+                alert("الرجاء إدخال رقم البطاقة");
             }
         }
 
@@ -382,7 +372,7 @@
 
             fetch(SCRIPT_URL, { method: "POST", body: params })
             .then(response => {
-                alert("تمت إضافة الاستقطاع بنجاح! ✅");
+                alert("تم الإرسال بنجاح! ✅");
                 form.reset();
                 document.getElementById('loader1').style.display = 'none';
                 showSection('driverOptionsSec');
@@ -419,57 +409,25 @@
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
             const loader = document.getElementById('loader3');
-
             if (pass !== "res9090") { alert("الرمز السري غير صحيح ❌"); return; }
-            if (restName === "") { alert("الرجاء كتابة اسم المطعم"); return; }
-
             loader.style.display = 'block';
-
             fetch(SCRIPT_URL)
             .then(response => response.json())
             .then(data => {
                 loader.style.display = 'none';
                 const myOrders = data.filter(row => row[1] == restName);
-
-                if (myOrders.length === 0) {
-                    alert("لا توجد طلبات مسجلة لهذا المطعم حتى الآن");
-                    return;
-                }
-
-                let html = `<table>
-                    <thead>
-                        <tr>
-                            <th>المندوب</th>
-                            <th>التاريخ</th>
-                            <th>المكان</th>
-                            <th>القيمة</th>
-                            <th>التفاصيل</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-                
+                if (myOrders.length === 0) { alert("لا توجد طلبات"); return; }
+                let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>القيمة</th><th>التفاصيل</th></tr></thead><tbody>`;
                 myOrders.forEach(row => {
-                    let dateStr = row[4];
-                    if(row[4].toString().includes('T')) dateStr = row[4].split('T')[0];
-                    html += `<tr>
-                        <td>${row[2]}</td>
-                        <td>${dateStr}</td>
-                        <td>${row[3]}</td>
-                        <td>${row[6]}</td>
-                        <td>${row[5]}</td>
-                    </tr>`;
+                    let dateStr = row[4].toString().includes('T') ? row[4].split('T')[0] : row[4];
+                    html += `<tr><td>${row[2]}</td><td>${dateStr}</td><td>${row[3]}</td><td>${row[6]}</td><td>${row[5]}</td></tr>`;
                 });
-
                 html += `</tbody></table>`;
                 document.getElementById('resultsArea').innerHTML = html;
                 document.getElementById('loginBlock').style.display = 'none';
                 document.getElementById('dashboardBlock').style.display = 'block';
-                document.getElementById('dashTitle').innerText = "أهلاً بك: " + restName;
             })
-            .catch(error => {
-                alert("فشل في جلب البيانات");
-                loader.style.display = 'none';
-            });
+            .catch(error => { alert("خطأ في الجلب"); loader.style.display = 'none'; });
         }
     </script>
 </body>
