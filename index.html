@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#D4AF37">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>فريق نعاون لخدمات التوصيل</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -247,7 +247,27 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+input, select, textarea {
+            font-size: 16px !important; /* حجم 16 يمنع الزوم التلقائي خاصة في الآيفون */
+            padding: 10px; /* يعطي مساحة مريحة للكتابة */
+            width: 100%; /* لضمان تناسق العرض مع الشاشة */
+            box-sizing: border-box; /* لمنع المربع من الخروج عن حدود الشاشة */
+        }
 
+        /* لمنع المتصفحات من تغيير شكل المربعات بشكل تلقائي وتوحيد الحواف */
+        input, textarea {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        /* لتغيير لون الإطار عند الضغط على المربع (لمسة احترافية) */
+        input:focus {
+            border-color: #D4AF37; /* اللون الذهبي الذي اخترناه */
+            outline: none;
+        }
     </style>
 </head>
 <body>
