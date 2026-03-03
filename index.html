@@ -430,5 +430,38 @@
             .catch(error => { alert("خطأ في الجلب"); loader.style.display = 'none'; });
         }
     </script>
+    <footer style="text-align: center; padding: 20px;">
+        <button id="showDeductionBtn" style="padding: 10px 20px; background: red; color: white; border: none; border-radius: 5px;">
+            جدول الاستقطاع
+        </button>
+    </footer>
+
+    <div id="imageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);">
+        <span id="closeModal" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer;">&times;</span>
+        <img src="https://imgur.com/OImhHAY" style="max-width: 90%; margin-top: 50px;">
+    </div>
+
+    <script>
+        const modal = document.getElementById("imageModal");
+        const btn = document.getElementById("showDeductionBtn");
+        const span = document.getElementById("closeModal");
+
+        // إظهار النافذة
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // إخفاء النافذة عند الضغط على X
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // إخفاء النافذة عند الضغط خارج الصورة
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
