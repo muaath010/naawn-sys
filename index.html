@@ -397,8 +397,66 @@ input, select, textarea {
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2BWvk6D3phOhXfKwfSrHpzcBFWg0ianU10prZZS76j0sG-EzKA8Ulungs2Y6a7mgFVQ/exec";
+      // 1. ضع رابط السكربت الخاص بك هنا (الذي ينتهي بـ /exec)
+const scriptURL = "https://script.google.com/macros/s/AKfycbyf2D55ex68VviASP08gZP11jEqwMwhdliNSklyhpPVco8mQhfaZEAxc1JekpZTp1Pa/exec";
 
+// متغير عام لتخزين البيانات القادمة من جوجل
+window.globalData = null;
+
+// --- أولاً: جلب البيانات عند فتح الصفحة ---
+function fetchGoogleData() {
+    fetch(scriptURL)
+        .then(response => response.json())
+        .then(data => {
+            window.globalData = data; // حفظ البيانات للإدارة
+            console.log("تم تحديث البيانات من السحابة");
+        })
+        .catch(error => console.error("خطأ في الجلب:", error));
+}
+
+// تشغيل الجلب فور تحميل الصفحة
+window.addEventListener('load', fetchGoogleData);
+
+// --- ثانياً: إرسال بيانات (استقطاع أو فاتورة) ---
+function submitData(formData, actionType) {
+    // إظهار رسالة "جاري الإرسال"
+    const submitBtn = event.target.querySelector('button');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = "جاري الحفظ... ⏳";
+    submitBtn.disabled = true;
+
+    // إضافة نوع العملية (إضافة فاتورة أو استقطاع)
+    formData.append("action", actionType);
+
+    fetch(scriptURL, { method: 'POST', body: formData })
+        .then(response => {
+            alert("تم الحفظ بنجاح! ✅");
+            event.target.reset(); // تفريغ الحقول
+            fetchGoogleData(); // تحديث البيانات فوراً للإدارة
+        })
+        .catch(error => alert("حدث خطأ، حاول مرة أخرى! ❌"))
+        .finally(() => {
+            submitBtn.innerText = originalText;
+            submitBtn.disabled = false;
+        });
+}
+
+// --- ثالثاً: كود دخول الإدارة (الذي شرحناه سابقاً) ---
+const adminBtn = document.getElementById("adminLoginBtn");
+const adminPanel = document.getElementById("adminPanel");
+const ADMIN_PASSWORD = "9090"; // 🔑 غير الباسورد هنا
+
+if(adminBtn) {
+    adminBtn.onclick = function() {
+        let pwd = prompt("الرجاء إدخال كلمة مرور الإدارة:");
+        if (pwd === ADMIN_PASSWORD) {
+            adminPanel.style.display = "block";
+            generateAdminReport(); 
+        } else if (pwd !== null) {
+            alert("كلمة المرور غير صحيحة ❌");
+        }
+    }
+}
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
             document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
@@ -507,6 +565,21 @@ input, select, textarea {
     " onmouseover="this.style.backgroundColor='#B8952E'" onmouseout="this.style.backgroundColor='#D4AF37'">
         جدول الاستقطاع
     </button>
+       <div style="text-align: center; padding-bottom: 20px;">
+    <button id="adminLoginBtn" style="background: transparent; border: none; color: #aaa; text-decoration: underline; font-size: 14px; width: auto; height: auto;">
+        دخول الإدارة
+    </button>
+</div>
+
+<div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 10000; overflow-y: auto;">
+    <div style="background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0;">
+        <h2 style="margin: 0; color: #D4AF37;">ملخص المناديب</h2>
+        <span id="closeAdminPanel" style="font-size: 30px; font-weight: bold; color: #e74c3c; cursor: pointer;">&times;</span>
+    </div>
+    
+    <div id="adminContent" style="padding: 15px;">
+        </div>
+</div>
 </footer>
 
     <div id="imageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);">
@@ -535,6 +608,100 @@ input, select, textarea {
                 modal.style.display = "none";
             }
         }
+        // --- إعدادات الإدارة ---
+const adminBtn = document.getElementById("adminLoginBtn");
+const adminPanel = document.getElementById("adminPanel");
+const closeAdmin = document.getElementById("closeAdminPanel");
+const ADMIN_PASSWORD = "1234"; // 🔑 غير كلمة المرور من هنا
+
+// فتح شاشة الإدارة بكلمة مرور
+adminBtn.onclick = function() {
+    let pwd = prompt("الرجاء إدخال كلمة مرور الإدارة:");
+    if (pwd === ADMIN_PASSWORD) {
+        adminPanel.style.display = "block";
+        generateAdminReport(); // استدعاء دالة التلخيص
+    } else if (pwd !== null) {
+        alert("كلمة المرور غير صحيحة ❌");
+    }
+}
+
+// إغلاق شاشة الإدارة
+closeAdmin.onclick = function() {
+    adminPanel.style.display = "none";
+}
+
+// --- دالة تلخيص بيانات المناديب ---
+function generateAdminReport() {
+    const adminContent = document.getElementById("adminContent");
+    adminContent.innerHTML = "<p style='text-align:center;'>جاري حساب الملخص...</p>";
+
+    // 🔥 ملاحظة هامة: يجب أن تكون قد جلبت البيانات مسبقاً من رابط السكربت 
+    // وحفظتها في متغير مثلاً اسمه (globalData)
+    // إذا لم تفعل ذلك، أخبرني لأكتب لك كود الجلب الكامل
+    
+    if (!window.globalData) {
+        adminContent.innerHTML = "<p style='text-align:center; color:red;'>لم يتم تحميل البيانات بعد، يرجى الانتظار أو تحديث الصفحة.</p>";
+        return;
+    }
+
+    let driversData = {};
+
+    // 1. تجميع بيانات الفواتير (الطلبات والمبالغ)
+    let invoices = window.globalData.invoices;
+    for (let i = 1; i < invoices.length; i++) {
+        let driverName = invoices[i][2]; // العمود C (اسم المندوب)
+        let price = parseFloat(invoices[i][8]) || 0; // العمود I (المبلغ المحسوب)
+        
+        if (!driversData[driverName]) {
+            driversData[driverName] = { ordersCount: 0, totalCollected: 0, totalDeductions: 0 };
+        }
+        driversData[driverName].ordersCount += 1; // كل صف يعتبر طلب
+        driversData[driverName].totalCollected += price;
+    }
+
+    // 2. تجميع بيانات الاستقطاعات
+    let deductions = window.globalData.deductions;
+    for (let j = 1; j < deductions.length; j++) {
+        let driverName = deductions[j][1]; // العمود B (اسم المندوب)
+        let deductionAmount = parseFloat(deductions[j][8]) || 0; // العمود I (الاستقطاع الكلي)
+        
+        if (!driversData[driverName]) {
+            driversData[driverName] = { ordersCount: 0, totalCollected: 0, totalDeductions: 0 };
+        }
+        driversData[driverName].totalDeductions += deductionAmount;
+    }
+
+    // 3. رسم الكروت على الشاشة
+    let htmlOutput = "";
+    for (let driver in driversData) {
+        let data = driversData[driver];
+        let netProfit = data.totalCollected - data.totalDeductions; // الصافي
+        
+        htmlOutput += `
+        <div class="container" style="border-right: 5px solid #D4AF37; margin-bottom: 15px;">
+            <h3 style="margin-top: 0; color: #333;">👤 ${driver}</h3>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
+                <span>الطلبات المستلمة:</span> <strong>${data.ordersCount} طلب</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
+                <span>المبالغ المحصلة:</span> <strong style="color: green;">${data.totalCollected.toFixed(3)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
+                <span>الاستقطاعات:</span> <strong style="color: red;">${data.totalDeductions.toFixed(3)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 18px;">
+                <span>الصافي المطلوب:</span> <strong>${netProfit.toFixed(3)}</strong>
+            </div>
+        </div>`;
+    }
+
+    // إذا لم يكن هناك بيانات
+    if (htmlOutput === "") {
+        htmlOutput = "<p style='text-align:center;'>لا توجد بيانات للمناديب حتى الآن.</p>";
+    }
+
+    adminContent.innerHTML = htmlOutput;
+}
     </script>
 </body>
 </html>
