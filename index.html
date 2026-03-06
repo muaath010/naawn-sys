@@ -510,51 +510,75 @@
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
         });
-
-        // 9. دالة تقرير الإدارة المحدثة والاحترافية
+// 9. دالة تقرير الإدارة (تم ضبط الأعمدة ومعالجة الفواصل العشرية)
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
-            if (!window.globalData) {
+            if (!window.globalData || !window.globalData.deductions) {
                 gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>جاري تحميل البيانات من الخادم...</p>";
                 return;
             }
 
             let drivers = {};
-            const inv = window.globalData.invoices || [];
             const ded = window.globalData.deductions || [];
 
             let globalTotalOrders = 0;
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
 
-            // معالجة الفواتير
-            inv.slice(1).forEach(row => {
-                let name = row[2] ? row[2].trim() : "غير معروف";
-                let price = parseFloat(row[8]) || parseFloat(row[6]) || 0; 
-                
-                if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
-                drivers[name].count++;
-                drivers[name].total += price;
-
-                globalTotalOrders++;
-                globalTotalRevenue += price;
-            });
-
-            // معالجة الاستقطاعات
+            // تجاهل الصف الأول (عناوين الأعمدة)
             ded.slice(1).forEach(row => {
-                let name = row[1] ? row[1].trim() : "غير معروف";
-                let val = parseFloat(row[8]) || parseFloat(row[5]) || 0; 
                 
-                if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
-                drivers[name].deds += val;
+                // الاعتماد على ترتيب الأعمدة في صورتك:
+                // row[1] = اسم المندوب (العمود B)
+                // row[2] = عدد الطلبات (العمود C)
+                // row[4] = المبالغ التفصيلية (العمود E)
+                // row[5] = الاستقطاع الكلي (العمود F)
+                
+                let name = row[1] ? row[1].toString().trim() : "";
+                if (!name) return; // تخطي الصفوف الفارغة
+
+                // قراءة عدد الطلبات
+                let ordersCount = parseInt(row[2]) || 0;
+
+                // قراءة الاستقطاع الكلي مع تحويل الفاصلة (,) إلى نقطة (.)
+                let rawDeduction = row[5] ? row[5].toString().replace(/,/g, '.') : "0";
+                let deductionAmount = parseFloat(rawDeduction) || 0;
+
+                // حساب "المحصل" بجمع الأرقام المدخلة في حقل المبالغ
+                let revenueAmount = 0;
+                let amountsString = row[4] || "";
+                let amountsArray = amountsString.toString().split('\n');
+                
+                amountsArray.forEach(amt => {
+                    // تحويل الفاصلة إلى نقطة في كل سطر مبلغ لضمان صحة الجمع
+                    let cleanAmt = amt.toString().replace(/,/g, '.').trim();
+                    let val = parseFloat(cleanAmt);
+                    if (!isNaN(val)) {
+                        revenueAmount += val;
+                    }
+                });
+
+                // إنشاء سجل للمندوب إذا لم يكن موجوداً
+                if (!drivers[name]) {
+                    drivers[name] = { count: 0, total: 0, deds: 0 };
+                }
+
+                // إضافة البيانات لرصيد المندوب
+                drivers[name].count += ordersCount;
+                drivers[name].total += revenueAmount;
+                drivers[name].deds += deductionAmount;
+
+                // إضافة البيانات للإجمالي العام
+                globalTotalOrders += ordersCount;
+                globalTotalRevenue += revenueAmount;
             });
 
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
-                let net = d.total - d.deds;
+                let net = d.total - d.deds; // الصافي = المحصل - الاستقطاع
                 globalTotalNet += net;
 
                 html += `
@@ -571,10 +595,10 @@
                 </div>`;
             }
 
-            // تحديث شريط الملخص العام للإدارة
+            // تحديث شريط الملخص العام
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
-                <div class="summary-item"><span>إجمالي المبالغ</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
+                <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
                 <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${globalTotalNet.toFixed(3)}</strong></div>
             `;
 
