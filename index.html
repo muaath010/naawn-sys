@@ -34,6 +34,7 @@
             border-bottom: 2px solid var(--gold);
             margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
         }
 
         .logo-container {
@@ -90,6 +91,7 @@
             padding: 30px; border-radius: 20px;
             border: 1px solid #eee; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             animation: slideUp 0.5s ease;
+            box-sizing: border-box;
         }
 
         .input-group { margin-bottom: 20px; text-align: right; }
@@ -133,6 +135,79 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* --- تنسيقات لوحة الإدارة الاحترافية --- */
+        #adminPanel {
+            background-color: #f4f7fe !important;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, var(--red), var(--gold-light));
+            color: white;
+            padding: 25px 20px 40px;
+            text-align: center;
+            position: relative;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .admin-header h2 { margin: 0; font-size: 1.6rem; color: white; }
+        .close-admin {
+            position: absolute; top: 15px; left: 20px;
+            font-size: 30px; cursor: pointer; color: white;
+            transition: 0.3s;
+        }
+        .close-admin:hover { transform: scale(1.1); }
+        .admin-search-container {
+            padding: 0 20px; margin-top: -25px;
+            position: relative; z-index: 10;
+        }
+        .admin-search {
+            width: 100%; padding: 15px 20px;
+            border-radius: 30px; border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            font-size: 1rem; font-family: 'Tajawal', sans-serif;
+            outline: none; box-sizing: border-box; text-align: right;
+        }
+        .admin-search:focus { border: 2px solid var(--gold); }
+        .admin-summary {
+            display: flex; justify-content: space-around;
+            background: white; margin: 20px; padding: 15px;
+            border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .summary-item { text-align: center; }
+        .summary-item span { display: block; font-size: 0.85rem; color: #777; margin-bottom: 5px; font-weight: bold;}
+        .summary-item strong { font-size: 1.2rem; color: var(--text); }
+        .admin-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px; padding: 0 20px 30px;
+        }
+        .driver-card {
+            background: white; border-radius: 15px; padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            border-top: 4px solid var(--gold); transition: transform 0.3s;
+            text-align: right;
+        }
+        .driver-card:hover { transform: translateY(-5px); }
+        .driver-name {
+            font-size: 1.2rem; font-weight: bold; color: var(--text);
+            margin-bottom: 15px; border-bottom: 1px solid #eee;
+            padding-bottom: 10px; display: flex; align-items: center; gap: 10px;
+        }
+        .driver-stats { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 5px;}
+        .stat-box {
+            text-align: center; background: #f8f9fa;
+            padding: 10px; border-radius: 10px; width: 33%;
+        }
+        .stat-box span { display: block; font-size: 0.75rem; color: #666; margin-bottom: 5px; font-weight: bold;}
+        .stat-box strong { font-size: 1rem; direction: ltr; display: block; }
+        .text-success { color: #2ecc71 !important; }
+        .text-danger { color: #e74c3c !important; }
+        .text-primary { color: #3498db !important; }
+        .driver-net {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -253,7 +328,7 @@
         <button class="back-btn" onclick="goBack()">عودة للقائمة</button>
     </div>
 
-    <footer style="text-align: center; padding: 20px; background: #f8f9fa; margin-top: 30px;">
+    <footer style="text-align: center; padding: 20px; background: #f8f9fa; margin-top: auto;">
         <button id="showDeductionBtn" style="padding: 10px 20px; background: var(--gold); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
             جدول الاستقطاع
         </button>
@@ -264,12 +339,21 @@
         </div>
     </footer>
 
-    <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 10000; overflow-y: auto;">
-        <div style="background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0;">
-            <h2 style="margin: 0; color: var(--gold); font-size: 18px;">ملخص أداء المناديب</h2>
-            <span id="closeAdminPanel" style="font-size: 30px; font-weight: bold; color: #e74c3c; cursor: pointer;">&times;</span>
+    <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; overflow-y: auto;">
+        <div class="admin-header">
+            <h2>لوحة الإدارة والتقارير</h2>
+            <span id="closeAdminPanel" class="close-admin">&times;</span>
         </div>
-        <div id="adminContent" style="padding: 15px;"></div>
+        
+        <div class="admin-search-container">
+            <input type="text" id="driverSearch" class="admin-search" onkeyup="filterDrivers()" placeholder="🔍 ابحث عن اسم المندوب...">
+        </div>
+
+        <div id="adminSummary" class="admin-summary">
+            </div>
+
+        <div id="adminCardsGrid" class="admin-grid">
+            </div>
     </div>
 
     <div id="imageModal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); text-align: center;">
@@ -427,11 +511,13 @@
             };
         });
 
-        // 9. دالة تقرير الإدارة
+        // 9. دالة تقرير الإدارة المحدثة والاحترافية
         function generateAdminReport() {
-            const container = document.getElementById("adminContent");
+            const gridContainer = document.getElementById("adminCardsGrid");
+            const summaryContainer = document.getElementById("adminSummary");
+            
             if (!window.globalData) {
-                container.innerHTML = "<p>جاري تحميل البيانات...</p>";
+                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>جاري تحميل البيانات من الخادم...</p>";
                 return;
             }
 
@@ -439,19 +525,28 @@
             const inv = window.globalData.invoices || [];
             const ded = window.globalData.deductions || [];
 
+            let globalTotalOrders = 0;
+            let globalTotalRevenue = 0;
+            let globalTotalNet = 0;
+
             // معالجة الفواتير
             inv.slice(1).forEach(row => {
-                let name = row[2];
-                let price = parseFloat(row[8]) || 0;
+                let name = row[2] ? row[2].trim() : "غير معروف";
+                let price = parseFloat(row[8]) || parseFloat(row[6]) || 0; 
+                
                 if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
                 drivers[name].count++;
                 drivers[name].total += price;
+
+                globalTotalOrders++;
+                globalTotalRevenue += price;
             });
 
             // معالجة الاستقطاعات
             ded.slice(1).forEach(row => {
-                let name = row[1];
-                let val = parseFloat(row[8]) || 0;
+                let name = row[1] ? row[1].trim() : "غير معروف";
+                let val = parseFloat(row[8]) || parseFloat(row[5]) || 0; 
+                
                 if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
                 drivers[name].deds += val;
             });
@@ -459,18 +554,46 @@
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
+                let net = d.total - d.deds;
+                globalTotalNet += net;
+
                 html += `
-                <div style="background:white; padding:15px; margin-bottom:15px; border-radius:10px; border-right:5px solid var(--gold); box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-                    <h3 style="margin:0 0 10px 0;">👤 ${name}</h3>
-                    <div style="display:flex; justify-content:space-between;"><span>الطلبات:</span> <b>${d.count}</b></div>
-                    <div style="display:flex; justify-content:space-between;"><span>المحصل:</span> <b style="color:green;">${d.total.toFixed(3)}</b></div>
-                    <div style="display:flex; justify-content:space-between;"><span>الاستقطاع:</span> <b style="color:red;">${d.deds.toFixed(3)}</b></div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px solid #eee; padding-top:5px;">
-                        <span>الصافي:</span> <b>${(d.total - d.deds).toFixed(3)}</b>
+                <div class="driver-card" data-name="${name}">
+                    <div class="driver-name">👤 ${name}</div>
+                    <div class="driver-stats">
+                        <div class="stat-box"><span>الطلبات</span><strong>${d.count}</strong></div>
+                        <div class="stat-box"><span>المحصل</span><strong class="text-success">${d.total.toFixed(3)}</strong></div>
+                        <div class="stat-box"><span>الاستقطاع</span><strong class="text-danger">${d.deds.toFixed(3)}</strong></div>
+                    </div>
+                    <div class="driver-net">
+                        <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
                     </div>
                 </div>`;
             }
-            container.innerHTML = html || "<p>لا توجد بيانات حالياً</p>";
+
+            // تحديث شريط الملخص العام للإدارة
+            summaryContainer.innerHTML = `
+                <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
+                <div class="summary-item"><span>إجمالي المبالغ</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
+                <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${globalTotalNet.toFixed(3)}</strong></div>
+            `;
+
+            gridContainer.innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً لعرضها</p>";
+        }
+
+        // 10. دالة البحث المباشر في لوحة الإدارة
+        function filterDrivers() {
+            let input = document.getElementById('driverSearch').value.toLowerCase();
+            let cards = document.querySelectorAll('.driver-card');
+
+            cards.forEach(card => {
+                let name = card.getAttribute('data-name').toLowerCase();
+                if (name.includes(input)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>
