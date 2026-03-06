@@ -1,52 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#D4AF37">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#D4AF37">
     <title>فريق نعاون لخدمات التوصيل</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #f0f2f5; 
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .container {
-            background: white;
-            margin: 10px;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        button {
-            width: 100%; 
-            height: 48px;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            border: none; /* إضافة بسيطة لجمالية الزر */
-            cursor: pointer;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
         :root {
             --gold: #D4AF37;
             --gold-light: #F4C430;
@@ -58,50 +18,13 @@
             --text-light: #666666;
         }
 
-        .logo-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 15px auto;
-        }
-
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-            object-fit: cover;
-            position: relative;
-            z-index: 2;
-        }
-
-        .logo-container::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%;
-            background: var(--gold);
-            opacity: 0.5;
-            animation: pulse 2s infinite;
-            z-index: 1;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.5; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body {
             font-family: 'Tajawal', sans-serif;
             background-color: var(--light-bg);
             color: var(--text);
-            text-align: center;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            min-height: 100vh; text-align: center;
         }
 
         header {
@@ -113,180 +36,118 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
-        h1 {
-            color: var(--gold);
-            font-size: 2.5rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            margin-bottom: 5px;
+        .logo-container {
+            position: relative;
+            width: 120px; height: 120px;
+            margin: 0 auto 15px auto;
         }
-        
-        .slogan { font-size: 1.1rem; color: var(--text); font-weight: bold; }
+
+        .logo-container img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            object-fit: cover;
+            position: relative; z-index: 2;
+        }
+
+        .logo-container::after {
+            content: "";
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%; background: var(--gold);
+            opacity: 0.5; animation: pulse 2s infinite; z-index: 1;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        h1 { color: var(--gold); font-size: 2.5rem; margin-bottom: 5px; }
+        .slogan { font-size: 1.1rem; font-weight: bold; }
 
         .menu-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 90%;
-            max-width: 400px;
-            animation: fadeIn 1s ease-in;
+            display: flex; flex-direction: column;
+            gap: 20px; width: 90%; max-width: 400px;
+            margin: 0 auto; animation: fadeIn 1s ease-in;
         }
 
         .main-btn {
             background: var(--card-bg);
             border: 2px solid var(--red);
             color: var(--red);
-            padding: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
+            padding: 18px; font-size: 1.2rem; font-weight: bold;
+            border-radius: 15px; cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
-        .main-btn:hover {
-            background: var(--red);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(128, 0, 0, 0.2);
-        }
+        .main-btn:hover { background: var(--red); color: white; transform: translateY(-3px); }
 
         .page-section {
-            display: none;
-            background-color: var(--card-bg);
-            width: 90%;
-            max-width: 500px;
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid #eee;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            display: none; background-color: var(--card-bg);
+            width: 90%; max-width: 500px; margin: 0 auto 40px auto;
+            padding: 30px; border-radius: 20px;
+            border: 1px solid #eee; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             animation: slideUp 0.5s ease;
-            margin-bottom: 40px;
         }
-
-        h2 { color: var(--red); margin-bottom: 25px; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
 
         .input-group { margin-bottom: 20px; text-align: right; }
-
-        label {
-            display: block;
-            color: var(--text-light);
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            padding-right: 5px;
-        }
+        label { display: block; color: var(--text-light); margin-bottom: 8px; font-weight: bold; }
 
         input, textarea, select {
-            width: 100%;
-            padding: 12px 15px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            color: #333;
-            font-family: 'Tajawal', sans-serif;
-            outline: none;
-            transition: 0.3s;
-            text-align: right;
+            width: 100%; padding: 12px;
+            background: #f9f9f9; border: 1px solid #ddd;
+            border-radius: 12px; font-size: 16px !important;
+            font-family: 'Tajawal', sans-serif; outline: none;
+            box-sizing: border-box; -webkit-appearance: none;
         }
 
-        input:focus, textarea:focus { 
-            border-color: var(--red); 
-            background: #fff;
-            box-shadow: 0 0 8px rgba(128, 0, 0, 0.1);
-        }
+        input:focus { border-color: var(--gold); background: #fff; }
 
         .submit-btn {
-            width: 100%;
-            margin-top: 20px;
-            padding: 15px;
-            background: var(--red);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            width: 100%; padding: 15px;
+            background: var(--red); color: white;
+            border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
         }
-
-        .submit-btn:hover { background: var(--red-bright); transform: scale(1.02); }
 
         .back-btn {
-            margin-top: 15px;
-            background: transparent;
-            border: 1px solid #ccc;
-            color: #777;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
+            margin-top: 15px; background: transparent;
+            border: 1px solid #ccc; color: #777;
+            padding: 8px 20px; border-radius: 20px; cursor: pointer;
         }
-        .back-btn:hover { color: var(--red); border-color: var(--red); }
-
-        .table-container { overflow-x: auto; margin-top: 15px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 300px; background: white; }
-        th, td { padding: 12px; border: 1px solid #eee; font-size: 0.9rem; color: #333; }
-        th { background-color: var(--red); color: white; }
-        td { background-color: #fff; }
 
         .loader {
-            display: none;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--red);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
+            display: none; border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--red); border-radius: 50%;
+            width: 30px; height: 30px; animation: spin 1s linear infinite;
             margin: 10px auto;
         }
+
+        .table-container { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #eee; font-size: 0.9rem; }
+        th { background-color: var(--red); color: white; }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-input, select, textarea {
-            font-size: 16px !important; /* حجم 16 يمنع الزوم التلقائي خاصة في الآيفون */
-            padding: 10px; /* يعطي مساحة مريحة للكتابة */
-            width: 100%; /* لضمان تناسق العرض مع الشاشة */
-            box-sizing: border-box; /* لمنع المربع من الخروج عن حدود الشاشة */
-        }
-
-        /* لمنع المتصفحات من تغيير شكل المربعات بشكل تلقائي وتوحيد الحواف */
-        input, textarea {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-
-        /* لتغيير لون الإطار عند الضغط على المربع (لمسة احترافية) */
-        input:focus {
-            border-color: #D4AF37; /* اللون الذهبي الذي اخترناه */
-            outline: none;
-        }
     </style>
 </head>
 <body>
 
     <header>
-      <div class="logo-container">
+        <div class="logo-container">
             <img src="https://i.imgur.com/nYQiffV.png" alt="شعار فريق نعاون">
         </div>
         <h1>فريق نعاون</h1>
-        <div class="slogan">لخدمات التوصيل </div>
+        <div class="slogan">لخدمات التوصيل</div>
     </header>
 
     <div id="mainMenu" class="menu-container">
-        <button class="main-btn" onclick="showSection('driverLoginSec')">
-             لوحة المناديب
-        </button>
-        <button class="main-btn" onclick="showSection('settingsSec')">
-             الإعدادات  
-        </button>
+        <button class="main-btn" onclick="showSection('driverLoginSec')">لوحة المناديب</button>
+        <button class="main-btn" onclick="showSection('settingsSec')">الإعدادات</button>
     </div>
 
     <div id="driverLoginSec" class="page-section">
@@ -330,7 +191,6 @@ input, select, textarea {
                 <label>الاستقطاع الكلي (ر.ع)</label>
                 <input type="text" name="deduction" required>
             </div>
-
             <button type="submit" class="submit-btn">إرسال البيانات</button>
             <div id="loader1" class="loader"></div>
         </form>
@@ -363,9 +223,8 @@ input, select, textarea {
             </div>
             <div class="input-group">
                 <label>قيمة الطلبية (ر.ع)</label>
-                <input type="number" step="0.01" name="price" required>
+                <input type="number" step="0.001" name="price" required>
             </div>
-
             <button type="submit" class="submit-btn">إرسال الفاتورة</button>
             <div id="loader2" class="loader"></div>
         </form>
@@ -386,81 +245,61 @@ input, select, textarea {
             <button onclick="checkLogin()" class="submit-btn">تسجيل الدخول</button>
             <div id="loader3" class="loader"></div>
         </div>
-
         <div id="dashboardBlock" style="display: none;">
             <h2 id="dashTitle">ملخص الطلبات</h2>
             <div class="table-container" id="resultsArea"></div>
             <button onclick="location.reload()" class="submit-btn" style="background: #666; margin-top: 15px;">تسجيل خروج</button>
         </div>
-        
         <button class="back-btn" onclick="goBack()">عودة للقائمة</button>
     </div>
 
+    <footer style="text-align: center; padding: 20px; background: #f8f9fa; margin-top: 30px;">
+        <button id="showDeductionBtn" style="padding: 10px 20px; background: var(--gold); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
+            جدول الاستقطاع
+        </button>
+        <div style="margin-top: 10px;">
+            <button id="adminLoginBtn" style="background: transparent; border: none; color: #aaa; text-decoration: underline; font-size: 14px; cursor: pointer;">
+                دخول الإدارة
+            </button>
+        </div>
+    </footer>
+
+    <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 10000; overflow-y: auto;">
+        <div style="background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0;">
+            <h2 style="margin: 0; color: var(--gold); font-size: 18px;">ملخص أداء المناديب</h2>
+            <span id="closeAdminPanel" style="font-size: 30px; font-weight: bold; color: #e74c3c; cursor: pointer;">&times;</span>
+        </div>
+        <div id="adminContent" style="padding: 15px;"></div>
+    </div>
+
+    <div id="imageModal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); text-align: center;">
+        <span id="closeModal" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer;">&times;</span>
+        <img src="https://i.imgur.com/nYQiffV.png" id="modalImg" style="max-width: 90%; margin-top: 60px; border: 2px solid white; border-radius: 10px;">
+    </div>
+
     <script>
-      // 1. ضع رابط السكربت الخاص بك هنا (الذي ينتهي بـ /exec)
-const scriptURL = "https://script.google.com/macros/s/AKfycbyf2D55ex68VviASP08gZP11jEqwMwhdliNSklyhpPVco8mQhfaZEAxc1JekpZTp1Pa/exec";
+        // 1. إعدادات الرابط والبيانات
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyf2D55ex68VviASP08gZP11jEqwMwhdliNSklyhpPVco8mQhfaZEAxc1JekpZTp1Pa/exec";
+        window.globalData = null;
 
-// متغير عام لتخزين البيانات القادمة من جوجل
-window.globalData = null;
-
-// --- أولاً: جلب البيانات عند فتح الصفحة ---
-function fetchGoogleData() {
-    fetch(scriptURL)
-        .then(response => response.json())
-        .then(data => {
-            window.globalData = data; // حفظ البيانات للإدارة
-            console.log("تم تحديث البيانات من السحابة");
-        })
-        .catch(error => console.error("خطأ في الجلب:", error));
-}
-
-// تشغيل الجلب فور تحميل الصفحة
-window.addEventListener('load', fetchGoogleData);
-
-// --- ثانياً: إرسال بيانات (استقطاع أو فاتورة) ---
-function submitData(formData, actionType) {
-    // إظهار رسالة "جاري الإرسال"
-    const submitBtn = event.target.querySelector('button');
-    const originalText = submitBtn.innerText;
-    submitBtn.innerText = "جاري الحفظ... ⏳";
-    submitBtn.disabled = true;
-
-    // إضافة نوع العملية (إضافة فاتورة أو استقطاع)
-    formData.append("action", actionType);
-
-    fetch(scriptURL, { method: 'POST', body: formData })
-        .then(response => {
-            alert("تم الحفظ بنجاح! ✅");
-            event.target.reset(); // تفريغ الحقول
-            fetchGoogleData(); // تحديث البيانات فوراً للإدارة
-        })
-        .catch(error => alert("حدث خطأ، حاول مرة أخرى! ❌"))
-        .finally(() => {
-            submitBtn.innerText = originalText;
-            submitBtn.disabled = false;
-        });
-}
-
-// --- ثالثاً: كود دخول الإدارة (الذي شرحناه سابقاً) ---
-const adminBtn = document.getElementById("adminLoginBtn");
-const adminPanel = document.getElementById("adminPanel");
-const ADMIN_PASSWORD = "9090"; // 🔑 غير الباسورد هنا
-
-if(adminBtn) {
-    adminBtn.onclick = function() {
-        let pwd = prompt("الرجاء إدخال كلمة مرور الإدارة:");
-        if (pwd === ADMIN_PASSWORD) {
-            adminPanel.style.display = "block";
-            generateAdminReport(); 
-        } else if (pwd !== null) {
-            alert("كلمة المرور غير صحيحة ❌");
+        // 2. جلب البيانات تلقائياً
+        async function fetchGoogleData() {
+            try {
+                const response = await fetch(scriptURL);
+                window.globalData = await response.json();
+                console.log("تم تحديث البيانات بنجاح");
+            } catch (error) {
+                console.error("خطأ في جلب البيانات:", error);
+            }
         }
-    }
-}
+        window.addEventListener('load', fetchGoogleData);
+
+        // 3. وظائف التنقل
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
             document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
             document.getElementById(id).style.display = 'block';
+            window.scrollTo(0,0);
         }
 
         function goBack() {
@@ -468,6 +307,7 @@ if(adminBtn) {
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
+        // 4. نظام دخول المندوب
         function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
             if (cardId !== "") {
@@ -480,228 +320,158 @@ if(adminBtn) {
             }
         }
 
-        function submitDeduction(e) {
+        // 5. إرسال البيانات (استقطاع)
+        async function submitDeduction(e) {
             e.preventDefault();
-            document.getElementById('loader1').style.display = 'block';
-            const form = document.getElementById('deductionForm');
-            const data = new FormData(form);
-            const params = new URLSearchParams();
-            params.append('action', 'addDeduction');
-            for (const pair of data) { params.append(pair[0], pair[1]); }
+            const loader = document.getElementById('loader1');
+            const btn = e.target.querySelector('button');
+            loader.style.display = 'block';
+            btn.disabled = true;
 
-            fetch(SCRIPT_URL, { method: "POST", body: params })
-            .then(response => {
+            const formData = new FormData(e.target);
+            formData.append('action', 'addDeduction');
+
+            try {
+                await fetch(scriptURL, { method: "POST", body: formData });
                 alert("تم الإرسال بنجاح! ✅");
-                form.reset();
-                document.getElementById('loader1').style.display = 'none';
+                e.target.reset();
+                fetchGoogleData();
                 showSection('driverOptionsSec');
-            })
-            .catch(error => {
-                alert("حدث خطأ ❌");
-                document.getElementById('loader1').style.display = 'none';
-            });
+            } catch (error) {
+                alert("حدث خطأ في الإرسال ❌");
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
         }
 
-        function submitInvoice(e) {
+        // 6. إرسال البيانات (فاتورة)
+        async function submitInvoice(e) {
             e.preventDefault();
-            document.getElementById('loader2').style.display = 'block';
-            const form = document.getElementById('invoiceForm');
-            const data = new FormData(form);
-            const params = new URLSearchParams();
-            params.append('action', 'addInvoice');
-            for (const pair of data) { params.append(pair[0], pair[1]); }
+            const loader = document.getElementById('loader2');
+            const btn = e.target.querySelector('button');
+            loader.style.display = 'block';
+            btn.disabled = true;
 
-            fetch(SCRIPT_URL, { method: "POST", body: params })
-            .then(response => {
+            const formData = new FormData(e.target);
+            formData.append('action', 'addInvoice');
+
+            try {
+                await fetch(scriptURL, { method: "POST", body: formData });
                 alert("تم إرسال الفاتورة بنجاح! ✅");
-                form.reset();
-                document.getElementById('loader2').style.display = 'none';
+                e.target.reset();
+                fetchGoogleData();
                 showSection('driverOptionsSec');
-            })
-            .catch(error => {
+            } catch (error) {
                 alert("حدث خطأ ❌");
-                document.getElementById('loader2').style.display = 'none';
-            });
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
         }
 
+        // 7. دخول الشركاء (المطاعم)
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
-            const loader = document.getElementById('loader3');
             if (pass !== "res9090") { alert("الرمز السري غير صحيح ❌"); return; }
-            loader.style.display = 'block';
-            fetch(SCRIPT_URL)
-            .then(response => response.json())
-            .then(data => {
-                loader.style.display = 'none';
-                const myOrders = data.filter(row => row[1] == restName);
-                if (myOrders.length === 0) { alert("لا توجد طلبات"); return; }
-                let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>القيمة</th><th>التفاصيل</th></tr></thead><tbody>`;
-                myOrders.forEach(row => {
-                    let dateStr = row[4].toString().includes('T') ? row[4].split('T')[0] : row[4];
-                    html += `<tr><td>${row[2]}</td><td>${dateStr}</td><td>${row[3]}</td><td>${row[6]}</td><td>${row[5]}</td></tr>`;
-                });
-                html += `</tbody></table>`;
-                document.getElementById('resultsArea').innerHTML = html;
-                document.getElementById('loginBlock').style.display = 'none';
-                document.getElementById('dashboardBlock').style.display = 'block';
-            })
-            .catch(error => { alert("خطأ في الجلب"); loader.style.display = 'none'; });
-        }
-    </script>
-   <footer style="text-align: center; padding: 15px; background: #f8f9fa; margin-top: 10px;">
-    <button id="showDeductionBtn" style="
-        padding: 6px 14px; 
-        background-color: #D4AF37; 
-        color: white; 
-        border: none; 
-        border-radius: 4px; 
-        cursor: pointer; 
-        font-family: 'Cairo', sans-serif; 
-        font-size: 13px; 
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: 0.3s;
-    " onmouseover="this.style.backgroundColor='#B8952E'" onmouseout="this.style.backgroundColor='#D4AF37'">
-        جدول الاستقطاع
-    </button>
-       <div style="text-align: center; padding-bottom: 20px;">
-    <button id="adminLoginBtn" style="background: transparent; border: none; color: #aaa; text-decoration: underline; font-size: 14px; width: auto; height: auto;">
-        دخول الإدارة
-    </button>
-</div>
+            
+            if (!window.globalData) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
 
-<div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 10000; overflow-y: auto;">
-    <div style="background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0;">
-        <h2 style="margin: 0; color: #D4AF37;">ملخص المناديب</h2>
-        <span id="closeAdminPanel" style="font-size: 30px; font-weight: bold; color: #e74c3c; cursor: pointer;">&times;</span>
-    </div>
-    
-    <div id="adminContent" style="padding: 15px;">
-        </div>
-</div>
-</footer>
+            const myOrders = (window.globalData.invoices || []).filter(row => row[1] == restName);
+            if (myOrders.length === 0) { alert("لا توجد طلبات لهذا المطعم"); return; }
 
-    <div id="imageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);">
-        <span id="closeModal" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer;">&times;</span>
-        <img src="" style="max-width: 90%; margin-top: 50px;">
-    </div>
-
-    <script>
-        const modal = document.getElementById("imageModal");
-        const btn = document.getElementById("showDeductionBtn");
-        const span = document.getElementById("closeModal");
-
-        // إظهار النافذة
-        btn.onclick = function() {
-            modal.style.display = "block";
+            let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>القيمة</th></tr></thead><tbody>`;
+            myOrders.forEach(row => {
+                let dateStr = row[4] ? row[4].split('T')[0] : "---";
+                html += `<tr><td>${row[2]}</td><td>${dateStr}</td><td>${row[3]}</td><td>${row[6]}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+            
+            document.getElementById('resultsArea').innerHTML = html;
+            document.getElementById('loginBlock').style.display = 'none';
+            document.getElementById('dashboardBlock').style.display = 'block';
         }
 
-        // إخفاء النافذة عند الضغط على X
-        span.onclick = function() {
-            modal.style.display = "none";
-        }
+        // 8. أزرار الفوتر (جدول الاستقطاع + الإدارة)
+        document.addEventListener("DOMContentLoaded", function() {
+            const modal = document.getElementById("imageModal");
+            const adminPanel = document.getElementById("adminPanel");
 
-        // إخفاء النافذة عند الضغط خارج الصورة
-        window.onclick = function(event) {
-            if (event.target == modal) {
+            // زر الصورة
+            document.getElementById("showDeductionBtn").onclick = function() {
+                modal.style.display = "block";
+            };
+            document.getElementById("closeModal").onclick = function() {
                 modal.style.display = "none";
+            };
+
+            // زر الإدارة
+            document.getElementById("adminLoginBtn").onclick = function() {
+                let pwd = prompt("كلمة مرور الإدارة:");
+                if (pwd === "9090") {
+                    adminPanel.style.display = "block";
+                    generateAdminReport();
+                } else if (pwd !== null) {
+                    alert("كلمة المرور غير صحيحة ❌");
+                }
+            };
+            document.getElementById("closeAdminPanel").onclick = function() {
+                adminPanel.style.display = "none";
+            };
+
+            // إغلاق النوافذ عند الضغط خارجها
+            window.onclick = function(event) {
+                if (event.target == modal) modal.style.display = "none";
+                if (event.target == adminPanel) adminPanel.style.display = "none";
+            };
+        });
+
+        // 9. دالة تقرير الإدارة
+        function generateAdminReport() {
+            const container = document.getElementById("adminContent");
+            if (!window.globalData) {
+                container.innerHTML = "<p>جاري تحميل البيانات...</p>";
+                return;
             }
+
+            let drivers = {};
+            const inv = window.globalData.invoices || [];
+            const ded = window.globalData.deductions || [];
+
+            // معالجة الفواتير
+            inv.slice(1).forEach(row => {
+                let name = row[2];
+                let price = parseFloat(row[8]) || 0;
+                if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
+                drivers[name].count++;
+                drivers[name].total += price;
+            });
+
+            // معالجة الاستقطاعات
+            ded.slice(1).forEach(row => {
+                let name = row[1];
+                let val = parseFloat(row[8]) || 0;
+                if(!drivers[name]) drivers[name] = { count: 0, total: 0, deds: 0 };
+                drivers[name].deds += val;
+            });
+
+            let html = "";
+            for (let name in drivers) {
+                let d = drivers[name];
+                html += `
+                <div style="background:white; padding:15px; margin-bottom:15px; border-radius:10px; border-right:5px solid var(--gold); box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+                    <h3 style="margin:0 0 10px 0;">👤 ${name}</h3>
+                    <div style="display:flex; justify-content:space-between;"><span>الطلبات:</span> <b>${d.count}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>المحصل:</span> <b style="color:green;">${d.total.toFixed(3)}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>الاستقطاع:</span> <b style="color:red;">${d.deds.toFixed(3)}</b></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px solid #eee; padding-top:5px;">
+                        <span>الصافي:</span> <b>${(d.total - d.deds).toFixed(3)}</b>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html || "<p>لا توجد بيانات حالياً</p>";
         }
-        // --- إعدادات الإدارة ---
-const adminBtn = document.getElementById("adminLoginBtn");
-const adminPanel = document.getElementById("adminPanel");
-const closeAdmin = document.getElementById("closeAdminPanel");
-const ADMIN_PASSWORD = "1234"; // 🔑 غير كلمة المرور من هنا
-
-// فتح شاشة الإدارة بكلمة مرور
-adminBtn.onclick = function() {
-    let pwd = prompt("الرجاء إدخال كلمة مرور الإدارة:");
-    if (pwd === ADMIN_PASSWORD) {
-        adminPanel.style.display = "block";
-        generateAdminReport(); // استدعاء دالة التلخيص
-    } else if (pwd !== null) {
-        alert("كلمة المرور غير صحيحة ❌");
-    }
-}
-
-// إغلاق شاشة الإدارة
-closeAdmin.onclick = function() {
-    adminPanel.style.display = "none";
-}
-
-// --- دالة تلخيص بيانات المناديب ---
-function generateAdminReport() {
-    const adminContent = document.getElementById("adminContent");
-    adminContent.innerHTML = "<p style='text-align:center;'>جاري حساب الملخص...</p>";
-
-    // 🔥 ملاحظة هامة: يجب أن تكون قد جلبت البيانات مسبقاً من رابط السكربت 
-    // وحفظتها في متغير مثلاً اسمه (globalData)
-    // إذا لم تفعل ذلك، أخبرني لأكتب لك كود الجلب الكامل
-    
-    if (!window.globalData) {
-        adminContent.innerHTML = "<p style='text-align:center; color:red;'>لم يتم تحميل البيانات بعد، يرجى الانتظار أو تحديث الصفحة.</p>";
-        return;
-    }
-
-    let driversData = {};
-
-    // 1. تجميع بيانات الفواتير (الطلبات والمبالغ)
-    let invoices = window.globalData.invoices;
-    for (let i = 1; i < invoices.length; i++) {
-        let driverName = invoices[i][2]; // العمود C (اسم المندوب)
-        let price = parseFloat(invoices[i][8]) || 0; // العمود I (المبلغ المحسوب)
-        
-        if (!driversData[driverName]) {
-            driversData[driverName] = { ordersCount: 0, totalCollected: 0, totalDeductions: 0 };
-        }
-        driversData[driverName].ordersCount += 1; // كل صف يعتبر طلب
-        driversData[driverName].totalCollected += price;
-    }
-
-    // 2. تجميع بيانات الاستقطاعات
-    let deductions = window.globalData.deductions;
-    for (let j = 1; j < deductions.length; j++) {
-        let driverName = deductions[j][1]; // العمود B (اسم المندوب)
-        let deductionAmount = parseFloat(deductions[j][8]) || 0; // العمود I (الاستقطاع الكلي)
-        
-        if (!driversData[driverName]) {
-            driversData[driverName] = { ordersCount: 0, totalCollected: 0, totalDeductions: 0 };
-        }
-        driversData[driverName].totalDeductions += deductionAmount;
-    }
-
-    // 3. رسم الكروت على الشاشة
-    let htmlOutput = "";
-    for (let driver in driversData) {
-        let data = driversData[driver];
-        let netProfit = data.totalCollected - data.totalDeductions; // الصافي
-        
-        htmlOutput += `
-        <div class="container" style="border-right: 5px solid #D4AF37; margin-bottom: 15px;">
-            <h3 style="margin-top: 0; color: #333;">👤 ${driver}</h3>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
-                <span>الطلبات المستلمة:</span> <strong>${data.ordersCount} طلب</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
-                <span>المبالغ المحصلة:</span> <strong style="color: green;">${data.totalCollected.toFixed(3)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
-                <span>الاستقطاعات:</span> <strong style="color: red;">${data.totalDeductions.toFixed(3)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 18px;">
-                <span>الصافي المطلوب:</span> <strong>${netProfit.toFixed(3)}</strong>
-            </div>
-        </div>`;
-    }
-
-    // إذا لم يكن هناك بيانات
-    if (htmlOutput === "") {
-        htmlOutput = "<p style='text-align:center;'>لا توجد بيانات للمناديب حتى الآن.</p>";
-    }
-
-    adminContent.innerHTML = htmlOutput;
-}
     </script>
 </body>
 </html>
