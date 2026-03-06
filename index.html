@@ -509,19 +509,25 @@
                 if (event.target == modal) modal.style.display = "none";
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
-        });
-// 9. دالة تقرير الإدارة (تم ضبط الأعمدة ومعالجة الفواصل العشرية)
+        });// 9. دالة تقرير الإدارة (تم إصلاح مشكلة التحميل ومطابقة الأعمدة)
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
-            if (!window.globalData || !window.globalData.deductions) {
-                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>جاري تحميل البيانات من الخادم...</p>";
+            // التحقق من وصول البيانات بشكل عام فقط
+            if (!window.globalData) {
+                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>لم يتم تحميل البيانات بعد، يرجى إغلاق اللوحة والانتظار ثواني ثم المحاولة مجدداً...</p>";
                 return;
             }
 
             let drivers = {};
-            const ded = window.globalData.deductions || [];
+            // سحب البيانات سواء كان اسم الورقة بحرف كبير أو صغير
+            const ded = window.globalData.deductions || window.globalData.Deductions || [];
+
+            if (ded.length === 0) {
+                 gridContainer.innerHTML = "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً في ورقة الاستقطاعات لعرضها.</p>";
+                 return;
+            }
 
             let globalTotalOrders = 0;
             let globalTotalRevenue = 0;
@@ -530,29 +536,29 @@
             // تجاهل الصف الأول (عناوين الأعمدة)
             ded.slice(1).forEach(row => {
                 
-                // الاعتماد على ترتيب الأعمدة في صورتك:
-                // row[1] = اسم المندوب (العمود B)
-                // row[2] = عدد الطلبات (العمود C)
-                // row[4] = المبالغ التفصيلية (العمود E)
-                // row[5] = الاستقطاع الكلي (العمود F)
+                // مطابقة الأعمدة حسب صورتك المرفقة:
+                // row[1] = العمود B (اسم المندوب)
+                // row[2] = العمود C (عدد الطلبات)
+                // row[4] = العمود E (المبالغ التفصيلية)
+                // row[5] = العمود F (الاستقطاع الكلي)
                 
                 let name = row[1] ? row[1].toString().trim() : "";
                 if (!name) return; // تخطي الصفوف الفارغة
 
-                // قراءة عدد الطلبات
+                // 1. قراءة عدد الطلبات
                 let ordersCount = parseInt(row[2]) || 0;
 
-                // قراءة الاستقطاع الكلي مع تحويل الفاصلة (,) إلى نقطة (.)
+                // 2. قراءة الاستقطاع الكلي مع معالجة الفاصلة (,) وتحويلها إلى (.)
                 let rawDeduction = row[5] ? row[5].toString().replace(/,/g, '.') : "0";
                 let deductionAmount = parseFloat(rawDeduction) || 0;
 
-                // حساب "المحصل" بجمع الأرقام المدخلة في حقل المبالغ
+                // 3. حساب "المحصل" بجمع الأرقام المدخلة في حقل المبالغ التفصيلية
                 let revenueAmount = 0;
                 let amountsString = row[4] || "";
                 let amountsArray = amountsString.toString().split('\n');
                 
                 amountsArray.forEach(amt => {
-                    // تحويل الفاصلة إلى نقطة في كل سطر مبلغ لضمان صحة الجمع
+                    // تنظيف كل سطر من الفراغات وتحويل الفاصلة إلى نقطة
                     let cleanAmt = amt.toString().replace(/,/g, '.').trim();
                     let val = parseFloat(cleanAmt);
                     if (!isNaN(val)) {
@@ -570,7 +576,7 @@
                 drivers[name].total += revenueAmount;
                 drivers[name].deds += deductionAmount;
 
-                // إضافة البيانات للإجمالي العام
+                // إضافة البيانات للإجمالي العام للوحة
                 globalTotalOrders += ordersCount;
                 globalTotalRevenue += revenueAmount;
             });
@@ -595,14 +601,14 @@
                 </div>`;
             }
 
-            // تحديث شريط الملخص العام
+            // تحديث شريط الملخص العام في أعلى اللوحة
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
                 <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
                 <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${globalTotalNet.toFixed(3)}</strong></div>
             `;
 
-            gridContainer.innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً لعرضها</p>";
+            gridContainer.innerHTML = html;
         }
 
         // 10. دالة البحث المباشر في لوحة الإدارة
