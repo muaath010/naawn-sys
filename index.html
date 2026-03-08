@@ -491,15 +491,15 @@
             };
 
             // زر الإدارة
-            document.getElementById("adminLoginBtn").onclick = function() {
-                let pwd = prompt("كلمة مرور الإدارة:");
-                if (pwd === "9090") {
-                    adminPanel.style.display = "block";
-                    generateAdminReport();
-                } else if (pwd !== null) {
-                    alert("كلمة المرور غير صحيحة ❌");
-                }
-            };
+           document.getElementById("adminLoginBtn").onclick = function() {
+    let pwd = prompt("كلمة مرور الإدارة:");
+    if (pwd && btoa(pwd) === "OTA5MA==") {
+        adminPanel.style.display = "block";
+        generateAdminReport();
+    } else if (pwd !== null) {
+        alert("كلمة المرور غير صحيحة ❌");
+    }
+};
             document.getElementById("closeAdminPanel").onclick = function() {
                 adminPanel.style.display = "none";
             };
