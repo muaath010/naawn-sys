@@ -557,22 +557,21 @@
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
         });// 9. دالة تقرير الإدارة (تم إصلاح مشكلة التحميل ومطابقة الأعمدة)
+        // 9. دالة تقرير الإدارة (تقرأ الأرقام النظيفة من السيرفر وتعالج الكسور)
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
-            // التحقق من وصول البيانات بشكل عام فقط
             if (!window.globalData) {
-                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>لم يتم تحميل البيانات بعد، يرجى إغلاق اللوحة والانتظار ثواني ثم المحاولة مجدداً...</p>";
+                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>جاري تحميل البيانات، يرجى الانتظار ثواني...</p>";
                 return;
             }
 
             let drivers = {};
-            // سحب البيانات سواء كان اسم الورقة بحرف كبير أو صغير
             const ded = window.globalData.deductions || window.globalData.Deductions || [];
 
             if (ded.length === 0) {
-                 gridContainer.innerHTML = "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً في ورقة الاستقطاعات لعرضها.</p>";
+                 gridContainer.innerHTML = "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً لعرضها.</p>";
                  return;
             }
 
@@ -580,58 +579,54 @@
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
 
-            // تجاهل الصف الأول (عناوين الأعمدة)
             ded.slice(1).forEach(row => {
-                
-                // مطابقة الأعمدة حسب صورتك المرفقة:
-                // row[1] = العمود B (اسم المندوب)
-                // row[2] = العمود C (عدد الطلبات)
-                // row[4] = العمود E (المبالغ التفصيلية)
-                // row[5] = العمود F (الاستقطاع الكلي)
-                
                 let name = row[1] ? row[1].toString().trim() : "";
-                if (!name) return; // تخطي الصفوف الفارغة
+                if (!name) return;
 
-                // 1. قراءة عدد الطلبات
                 let ordersCount = parseInt(row[2]) || 0;
 
-                // 2. قراءة الاستقطاع الكلي مع معالجة الفاصلة (,) وتحويلها إلى (.)
-                let rawDeduction = row[5] ? row[5].toString().replace(/,/g, '.') : "0";
-                let deductionAmount = parseFloat(rawDeduction) || 0;
+                // --- حساب الاستقطاع (Deduction) ---
+                // نقرأ من العمود H (رقم 7) لأنه معالج من السيرفر، وإذا كان قديماً نقرأ من F ونعالجه
+                let deductionAmount = parseFloat(row[7]);
+                if (isNaN(deductionAmount)) {
+                    let rawDed = row[5] ? row[5].toString().replace(/,/g, '.').replace(/،/g, '.') : "0";
+                    deductionAmount = parseFloat(rawDed) || 0;
+                }
 
-                // 3. حساب "المحصل" بجمع الأرقام المدخلة في حقل المبالغ التفصيلية
-                let revenueAmount = 0;
-                let amountsString = row[4] || "";
-                let amountsArray = amountsString.toString().split('\n');
-                
-                amountsArray.forEach(amt => {
-                    // تنظيف كل سطر من الفراغات وتحويل الفاصلة إلى نقطة
-                    let cleanAmt = amt.toString().replace(/,/g, '.').trim();
-                    let val = parseFloat(cleanAmt);
-                    if (!isNaN(val)) {
-                        revenueAmount += val;
-                    }
-                });
+                // --- حساب المحصل (Revenue) ---
+                // نقرأ من العمود I (رقم 8) لأنه معالج، وإذا كان قديماً نجمعه يدوياً
+                let revenueAmount = parseFloat(row[8]);
+                if (isNaN(revenueAmount)) {
+                    revenueAmount = 0;
+                    let amountsString = row[4] || "";
+                    let amountsArray = amountsString.toString().split('\n');
+                    amountsArray.forEach(amt => {
+                        let cleanAmt = amt.toString().replace(/,/g, '.').replace(/،/g, '.').trim();
+                        let val = parseFloat(cleanAmt);
+                        if (!isNaN(val)) revenueAmount += val;
+                    });
+                }
 
-                // إنشاء سجل للمندوب إذا لم يكن موجوداً
+                // دالة صغيرة لتقريب الأرقام ومنع الكسور الطويلة جداً (مثل 1.5000000002)
+                const roundNum = (num) => Math.round(num * 1000) / 1000;
+
                 if (!drivers[name]) {
                     drivers[name] = { count: 0, total: 0, deds: 0 };
                 }
 
-                // إضافة البيانات لرصيد المندوب
+                // إضافة البيانات مع التقريب الرياضي
                 drivers[name].count += ordersCount;
-                drivers[name].total += revenueAmount;
-                drivers[name].deds += deductionAmount;
+                drivers[name].total = roundNum(drivers[name].total + revenueAmount);
+                drivers[name].deds = roundNum(drivers[name].deds + deductionAmount);
 
-                // إضافة البيانات للإجمالي العام للوحة
                 globalTotalOrders += ordersCount;
-                globalTotalRevenue += revenueAmount;
+                globalTotalRevenue = roundNum(globalTotalRevenue + revenueAmount);
             });
 
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
-                let net = d.total - d.deds; // الصافي = المحصل - الاستقطاع
+                let net = d.total - d.deds;
                 globalTotalNet += net;
 
                 html += `
@@ -648,7 +643,6 @@
                 </div>`;
             }
 
-            // تحديث شريط الملخص العام في أعلى اللوحة
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
                 <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
