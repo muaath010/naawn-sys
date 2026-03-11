@@ -455,24 +455,71 @@
         }
 
         // 7. دخول الشركاء (المطاعم)
+       // 7. دخول الشركاء (المطاعم) - مع إضافة تفاصيل الطلب
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
             if (pass !== "res9090") { alert("الرمز السري غير صحيح ❌"); return; }
             
-            if (!window.globalData) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
+            if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
 
-            const myOrders = (window.globalData.invoices || []).filter(row => row[1] == restName);
-            if (myOrders.length === 0) { alert("لا توجد طلبات لهذا المطعم"); return; }
+            // جلب طلبات المطعم مع تنظيف المسافات
+            const myOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
+            
+            if (myOrders.length === 0) { alert("لا توجد طلبات مسجلة لهذا المطعم"); return; }
 
-            let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>القيمة</th></tr></thead><tbody>`;
+            let totalOrdersCount = 0;
+            let totalAmountSum = 0;
+
+            // إضافة عمود "التفاصيل" في رأس الجدول
+            let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th></tr></thead><tbody>`;
+            
             myOrders.forEach(row => {
-                let dateStr = row[4] ? row[4].split('T')[0] : "---";
-                html += `<tr><td>${row[2]}</td><td>${dateStr}</td><td>${row[3]}</td><td>${row[6]}</td></tr>`;
+                // استخراج التاريخ من العمود E
+                let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
+                
+                // استخراج تفاصيل الطلبية من العمود F (رقم 5 برمجياً)
+                let orderDetails = row[5] ? row[5].toString() : "---";
+                
+                // الاعتماد على العمود I (المجموع الرقمي) أو العمود G
+                let rawPriceStr = (row[8] !== undefined && row[8] !== "") ? row[8].toString() : (row[6] ? row[6].toString() : "0");
+                rawPriceStr = rawPriceStr.replace(/,/g, '.');
+                let price = parseFloat(rawPriceStr);
+                
+                if (rawPriceStr.includes('T') || isNaN(price)) {
+                    price = 0; 
+                }
+                
+                totalOrdersCount++;
+                totalAmountSum += price;
+
+                // إضافة خلية التفاصيل في صفوف الجدول
+                html += `<tr>
+                    <td>${row[2]}</td>
+                    <td dir="ltr">${dateStr}</td>
+                    <td>${row[3]}</td>
+                    <td>${orderDetails}</td>
+                    <td style="color:#2ecc71; font-weight:bold;" dir="ltr">${price.toFixed(3)}</td>
+                </tr>`;
             });
             html += `</tbody></table>`;
             
-            document.getElementById('resultsArea').innerHTML = html;
+            // شريط الملخص الخاص بالمطعم
+            let summaryHtml = `
+            <div style="display:flex; justify-content:space-around; background:#f4f7fe; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #ddd;">
+                <div style="text-align:center;">
+                    <span style="display:block; font-size:0.9rem; color:#666;">إجمالي الطلبات</span>
+                    <strong style="font-size:1.4rem; color:#333;">${totalOrdersCount}</strong>
+                </div>
+                <div style="text-align:center;">
+                    <span style="display:block; font-size:0.9rem; color:#666;">إجمالي المبالغ</span>
+                    <strong style="font-size:1.4rem; color:#2ecc71;">${totalAmountSum.toFixed(3)} ر.ع</strong>
+                </div>
+            </div>
+            `;
+            
+            document.getElementById('dashTitle').innerText = "ملخص طلبات: " + restName;
+            document.getElementById('resultsArea').innerHTML = summaryHtml + html;
             document.getElementById('loginBlock').style.display = 'none';
             document.getElementById('dashboardBlock').style.display = 'block';
         }
