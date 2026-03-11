@@ -581,30 +581,34 @@
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
 
-            // --- الفلتر الصارم والذكي ---
+            // --- الفلتر الصارم والذكي (المُحدّث لفك الأرقام الملتصقة) ---
             const safeParse = (str) => {
                 if (!str) return 0;
                 let s = str.toString().trim();
                 
-                // 1. تدمير ثغرة التواريخ: إذا كان النص يبدو كتاريخ (يحتوي على 2025, 2026 أو حرف Z أو T) نعيده كصفر 
+                // 1. تدمير ثغرة التواريخ: إذا كان النص يبدو كتاريخ نعيده كصفر 
                 if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
                     return 0; // تجاهل الخلايا المعطوبة
                 }
 
-                // 2. توحيد الفواصل (عربية أو أجنبية)
+                // 2. توحيد الفواصل (عربية أو أجنبية) إلى نقطة
                 let cleanStr = s.replace(/[,،]/g, '.');
                 
-                // 3. مسح أي شيء ليس رقماً أو نقطة
-                cleanStr = cleanStr.replace(/[^\d.-]/g, '');
+                // 3. السر العظيم: فك الأرقام الملتصقة!
+                // يقرأ الأرقام مهما كانت ملتصقة (مثال: 1.20011.500 سيقسمها إلى 1.200 و 1 و 1.500)
+                let matches = cleanStr.match(/\d\.\d{1,3}|\.\d{1,3}|\d/g); 
                 
-                // 4. منع وجود أكثر من نقطة عشرية (مثال 1.5.0)
-                let firstDot = cleanStr.indexOf('.');
-                if (firstDot !== -1) {
-                    cleanStr = cleanStr.substring(0, firstDot + 1) + cleanStr.substring(firstDot + 1).replace(/\./g, '');
+                let sum = 0;
+                if (matches) {
+                    matches.forEach(m => {
+                        let val = parseFloat(m);
+                        // نجمع الرقم بشرط ألا يكون خيالياً (أكثر من 15 ريال للطلبية الواحدة يعتبر خطأ)
+                        if (!isNaN(val) && val < 15) { 
+                            sum += val;
+                        }
+                    });
                 }
-
-                let num = parseFloat(cleanStr);
-                return isNaN(num) ? 0 : num;
+                return sum;
             };
 
             // تجاوز الصف الأول (عناوين الشيت)
