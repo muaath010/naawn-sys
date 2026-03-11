@@ -558,19 +558,21 @@
             };
         });// 9. دالة تقرير الإدارة (تم إصلاح مشكلة التحميل ومطابقة الأعمدة)
         // 9. دالة تقرير الإدارة (تقرأ الأرقام النظيفة من السيرفر وتعالج الكسور)
+       // 9. دالة تقرير الإدارة (قراءة دقيقة ومطابقة 100% لجوجل شيت)
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
             if (!window.globalData) {
-                gridContainer.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>جاري تحميل البيانات، يرجى الانتظار ثواني...</p>";
+                gridContainer.innerHTML = "<div style='text-align:center; padding:20px;'><div class='loader' style='display:block; margin:auto;'></div><p style='margin-top:10px;'>جاري تحميل البيانات...</p></div>";
                 return;
             }
 
             let drivers = {};
+            // قراءة ورقة الاستقطاعات فقط
             const ded = window.globalData.deductions || window.globalData.Deductions || [];
 
-            if (ded.length === 0) {
+            if (ded.length <= 1) {
                  gridContainer.innerHTML = "<p style='text-align:center; width:100%;'>لا توجد بيانات حالياً لعرضها.</p>";
                  return;
             }
@@ -579,54 +581,60 @@
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
 
-            ded.slice(1).forEach(row => {
+            // --- دالة أمنية لتنظيف أي رقم مهما كان طريقة كتابته ---
+            const safeParse = (str) => {
+                if (!str) return 0;
+                // 1. تحويل الفاصلة العربية والإنجليزية إلى نقطة عشرية
+                let cleanStr = str.toString().replace(/[,،]/g, '.');
+                // 2. إزالة أي حروف، مسافات، أو رموز غريبة وترك الأرقام فقط
+                cleanStr = cleanStr.replace(/[^\d.-]/g, '');
+                // 3. تحويل النص النظيف إلى رقم
+                let num = parseFloat(cleanStr);
+                return isNaN(num) ? 0 : num;
+            };
+
+            // تجاهل الصف الأول (عناوين الشيت) وبدء القراءة
+            for (let i = 1; i < ded.length; i++) {
+                let row = ded[i];
                 let name = row[1] ? row[1].toString().trim() : "";
-                if (!name) return;
+                if (!name) continue;
 
                 let ordersCount = parseInt(row[2]) || 0;
 
-                // --- حساب الاستقطاع (Deduction) ---
-                // نقرأ من العمود H (رقم 7) لأنه معالج من السيرفر، وإذا كان قديماً نقرأ من F ونعالجه
-                let deductionAmount = parseFloat(row[7]);
-                if (isNaN(deductionAmount)) {
-                    let rawDed = row[5] ? row[5].toString().replace(/,/g, '.').replace(/،/g, '.') : "0";
-                    deductionAmount = parseFloat(rawDed) || 0;
+                // قراءة الاستقطاع الكلي مباشرة من العمود F (رقم 5 برمجياً)
+                let deductionAmount = safeParse(row[5]);
+
+                // قراءة المبالغ التفصيلية من العمود E (رقم 4 برمجياً) وجمع أسطرها للحصول على المحصل
+                let revenueAmount = 0;
+                let amountsString = row[4] || "";
+                let amountsArray = amountsString.toString().split('\n');
+                
+                for (let j = 0; j < amountsArray.length; j++) {
+                    revenueAmount += safeParse(amountsArray[j]);
                 }
 
-                // --- حساب المحصل (Revenue) ---
-                // نقرأ من العمود I (رقم 8) لأنه معالج، وإذا كان قديماً نجمعه يدوياً
-                let revenueAmount = parseFloat(row[8]);
-                if (isNaN(revenueAmount)) {
-                    revenueAmount = 0;
-                    let amountsString = row[4] || "";
-                    let amountsArray = amountsString.toString().split('\n');
-                    amountsArray.forEach(amt => {
-                        let cleanAmt = amt.toString().replace(/,/g, '.').replace(/،/g, '.').trim();
-                        let val = parseFloat(cleanAmt);
-                        if (!isNaN(val)) revenueAmount += val;
-                    });
-                }
-
-                // دالة صغيرة لتقريب الأرقام ومنع الكسور الطويلة جداً (مثل 1.5000000002)
-                const roundNum = (num) => Math.round(num * 1000) / 1000;
-
+                // إنشاء رصيد للمندوب إذا لم يكن موجوداً
                 if (!drivers[name]) {
                     drivers[name] = { count: 0, total: 0, deds: 0 };
                 }
 
-                // إضافة البيانات مع التقريب الرياضي
                 drivers[name].count += ordersCount;
-                drivers[name].total = roundNum(drivers[name].total + revenueAmount);
-                drivers[name].deds = roundNum(drivers[name].deds + deductionAmount);
+                drivers[name].total += revenueAmount;
+                drivers[name].deds += deductionAmount;
 
                 globalTotalOrders += ordersCount;
-                globalTotalRevenue = roundNum(globalTotalRevenue + revenueAmount);
-            });
+                globalTotalRevenue += revenueAmount;
+            }
 
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
-                let net = d.total - d.deds;
+                
+                // التقريب الآمن لـ 3 منازل عشرية لمنع أخطاء الجافاسكربت (مثل 0.300000004)
+                let total = Math.round(d.total * 1000) / 1000;
+                let deds = Math.round(d.deds * 1000) / 1000;
+                let net = Math.round((total - deds) * 1000) / 1000;
+                
                 globalTotalNet += net;
 
                 html += `
@@ -634,8 +642,8 @@
                     <div class="driver-name">👤 ${name}</div>
                     <div class="driver-stats">
                         <div class="stat-box"><span>الطلبات</span><strong>${d.count}</strong></div>
-                        <div class="stat-box"><span>المحصل</span><strong class="text-success">${d.total.toFixed(3)}</strong></div>
-                        <div class="stat-box"><span>الاستقطاع</span><strong class="text-danger">${d.deds.toFixed(3)}</strong></div>
+                        <div class="stat-box"><span>المحصل</span><strong class="text-success">${total.toFixed(3)}</strong></div>
+                        <div class="stat-box"><span>الاستقطاع</span><strong class="text-danger">${deds.toFixed(3)}</strong></div>
                     </div>
                     <div class="driver-net">
                         <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
@@ -643,15 +651,15 @@
                 </div>`;
             }
 
+            // تحديث الملخص العام بأرقام مقربة ودقيقة
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
-                <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${globalTotalRevenue.toFixed(3)}</strong></div>
-                <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${globalTotalNet.toFixed(3)}</strong></div>
+                <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${(Math.round(globalTotalRevenue * 1000) / 1000).toFixed(3)}</strong></div>
+                <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${(Math.round(globalTotalNet * 1000) / 1000).toFixed(3)}</strong></div>
             `;
 
             gridContainer.innerHTML = html;
         }
-
         // 10. دالة البحث المباشر في لوحة الإدارة
         function filterDrivers() {
             let input = document.getElementById('driverSearch').value.toLowerCase();
