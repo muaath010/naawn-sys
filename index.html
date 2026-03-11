@@ -560,7 +560,7 @@
         // 9. دالة تقرير الإدارة (تقرأ الأرقام النظيفة من السيرفر وتعالج الكسور)
        // 9. دالة تقرير الإدارة (قراءة دقيقة ومطابقة 100% لجوجل شيت)
         // 9. دالة تقرير الإدارة (مضادة لثغرات التواريخ والمسافات - مطابقة 100%)
-        function generateAdminReport() {
+       function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
@@ -580,29 +580,24 @@
             let globalTotalOrders = 0;
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
+            let globalTotalDeductions = 0; // المتغير الجديد لحساب إجمالي الاستقطاعات
 
-            // --- الفلتر الصارم والذكي (المُحدّث لفك الأرقام الملتصقة) ---
+            // --- الفلتر الصارم والذكي (لفك الأرقام الملتصقة) ---
             const safeParse = (str) => {
                 if (!str) return 0;
                 let s = str.toString().trim();
                 
-                // 1. تدمير ثغرة التواريخ: إذا كان النص يبدو كتاريخ نعيده كصفر 
                 if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
-                    return 0; // تجاهل الخلايا المعطوبة
+                    return 0; 
                 }
 
-                // 2. توحيد الفواصل (عربية أو أجنبية) إلى نقطة
                 let cleanStr = s.replace(/[,،]/g, '.');
-                
-                // 3. السر العظيم: فك الأرقام الملتصقة!
-                // يقرأ الأرقام مهما كانت ملتصقة (مثال: 1.20011.500 سيقسمها إلى 1.200 و 1 و 1.500)
                 let matches = cleanStr.match(/\d\.\d{1,3}|\.\d{1,3}|\d/g); 
                 
                 let sum = 0;
                 if (matches) {
                     matches.forEach(m => {
                         let val = parseFloat(m);
-                        // نجمع الرقم بشرط ألا يكون خيالياً (أكثر من 15 ريال للطلبية الواحدة يعتبر خطأ)
                         if (!isNaN(val) && val < 15) { 
                             sum += val;
                         }
@@ -618,15 +613,10 @@
                 if (!name) continue;
 
                 let ordersCount = parseInt(row[2]) || 0;
-
-                // قراءة الاستقطاع الكلي (العمود F -> رقم 5)
                 let deductionAmount = safeParse(row[5]);
 
-                // قراءة المبالغ (العمود E -> رقم 4) ومعالجتها
                 let revenueAmount = 0;
                 let amountsString = row[4] || "";
-                
-                // تقسيم المبالغ سواء كانت بأسطر جديدة أو مسافات فقط!
                 let amountsArray = amountsString.toString().split(/[\n\s]+/); 
                 
                 for (let j = 0; j < amountsArray.length; j++) {
@@ -649,12 +639,12 @@
             for (let name in drivers) {
                 let d = drivers[name];
                 
-                // التقريب الآمن لـ 3 منازل عشرية لمنع أخطاء الجافاسكربت الكسرية
                 let total = Math.round(d.total * 1000) / 1000;
                 let deds = Math.round(d.deds * 1000) / 1000;
                 let net = Math.round((total - deds) * 1000) / 1000;
                 
                 globalTotalNet += net;
+                globalTotalDeductions += deds; // جمع استقطاعات كل مندوب للإجمالي العام
 
                 html += `
                 <div class="driver-card" data-name="${name}">
@@ -670,9 +660,11 @@
                 </div>`;
             }
 
+            // تحديث الملخص العام بإضافة مربع (إجمالي الاستقطاع)
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
                 <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${(Math.round(globalTotalRevenue * 1000) / 1000).toFixed(3)}</strong></div>
+                <div class="summary-item"><span>إجمالي الاستقطاع</span><strong class="text-danger">${(Math.round(globalTotalDeductions * 1000) / 1000).toFixed(3)}</strong></div>
                 <div class="summary-item"><span>الصافي العام</span><strong class="text-primary">${(Math.round(globalTotalNet * 1000) / 1000).toFixed(3)}</strong></div>
             `;
 
