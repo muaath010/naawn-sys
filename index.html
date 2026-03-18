@@ -522,7 +522,7 @@
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
-            if (pass !== "res9090") { alert("الرمز السري غير صحيح ❌"); return; }
+            if (pass !== "cmVzOTA5MA==") { alert("الرمز السري غير صحيح ❌"); return; }
             
             if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
 
@@ -782,7 +782,7 @@
         // --- نظام الأرشفة والتصفير ---
         async function archiveCycle() {
             let pass = prompt("تحذير: هذه العملية ستقوم بنقل وتصفير جميع بيانات المناديب والمطاعم لتبدأ دورة جديدة.\nأدخل كلمة المرور للتأكيد:");
-            if(pass !== "res9090") {
+            if(pass !== "OTA5MA==") {
                 if (pass !== null) alert("كلمة المرور خاطئة ❌");
                 return;
             }
