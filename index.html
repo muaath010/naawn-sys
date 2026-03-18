@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
@@ -213,7 +212,7 @@
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
 
-        /* --- تنسيقات صفحة الإحصائيات والمخطط --- */
+        /* --- تنسيقات صفحة الإحصائيات --- */
         #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
         .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -224,7 +223,6 @@
         .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
         .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
         .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
-        .chart-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -365,13 +363,6 @@
         <button onclick="downloadStatsPDF()" class="pdf-btn">📥 تحميل التقرير (PDF)</button>
         
         <div id="pdfContentArea" style="background: #f4f7fe; padding: 15px;">
-            <div class="chart-container" style="page-break-after: always;">
-                <h3 style="margin-top:0; color:var(--text); text-align:right;">أداء الفريق (عدد الطلبات)</h3>
-                <div style="height: 300px;">
-                    <canvas id="driversChart"></canvas>
-                </div>
-            </div>
-
             <div id="statsCardsGrid">
                 </div>
         </div>
@@ -407,7 +398,6 @@
     <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbyBSoOGi3MhBHCAAR7s7QGsWn6P3F7C_I65p5uddLdhDJpOxkT5kNpqCPYWTK1yhEdUrg/exec";
         window.globalData = null;
-        window.driversChartInstance = null; // متغير لحفظ المخطط البياني
 
         async function fetchGoogleData() {
             try {
@@ -703,7 +693,7 @@
             });
         }
 
-        // --- دوال لوحة الإحصائيات والمخططات ---
+        // --- دوال لوحة الإحصائيات والمستويات ---
         function openStatsPanel() {
             document.getElementById("adminStatsPanel").style.display = "block";
             generateStatsReport();
@@ -734,56 +724,18 @@
                 return { name: name, orders: drivers[name] };
             }).sort((a, b) => b.orders - a.orders);
 
-            // --- رسم المخطط البياني (Chart.js) ---
-            const chartCanvas = document.getElementById('driversChart');
-            if (chartCanvas) {
-                const ctx = chartCanvas.getContext('2d');
-                
-                // مسح المخطط القديم إذا وجد لتجنب التداخل
-                if (window.driversChartInstance) {
-                    window.driversChartInstance.destroy();
-                }
-
-                const labels = sortedDrivers.map(d => d.name);
-                const data = sortedDrivers.map(d => d.orders);
-
-                window.driversChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'الطلبات المنجزة',
-                            data: data,
-                            backgroundColor: '#D4AF37',
-                            borderRadius: 5,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }, // إخفاء المفتاح
-                        scales: {
-                            y: { beginAtZero: true, ticks: { precision: 0 } },
-                            x: { ticks: { font: { family: 'Tajawal' } } }
-                        }
-                    }
-                });
-            }
-            // ------------------------------------
-
             let html = "";
             let pageBuffer = "";
 
             sortedDrivers.forEach((d, index) => {
                 let percentage = totalGlobalOrders > 0 ? ((d.orders / totalGlobalOrders) * 100).toFixed(1) : 0;
                 
-                let level = "مبتدئ 🥉";
-                let color = "#cd7f32"; 
+                let level = "ضعيف 📉";
+                let color = "#e74c3c"; // أحمر
                 
-                if (d.orders >= 100) { level = "ماسي 💎"; color = "#9b59b6"; }
-                else if (d.orders >= 50) { level = "محترف 🥇"; color = "#f1c40f"; }
-                else if (d.orders >= 20) { level = "متقدم 🥈"; color = "#95a5a6"; }
+                if (d.orders >= 100) { level = "متميز 🌟"; color = "#9b59b6"; } // بنفسجي
+                else if (d.orders >= 50) { level = "جيد جداً 🟢"; color = "#2ecc71"; } // أخضر
+                else if (d.orders >= 20) { level = "متوسط 🟡"; color = "#f39c12"; } // برتقالي مائل للذهبي
 
                 pageBuffer += `
                 <div class="stat-card">
@@ -800,7 +752,8 @@
                     </div>
                 </div>`;
 
-                if ((index + 1) % 4 === 0 || index === sortedDrivers.length - 1) {
+                // بعد كل 6 مناديب يتم إغلاق حاوية الشبكة ووضع فاصل صفحة (Page Break) للـ PDF
+                if ((index + 1) % 6 === 0 || index === sortedDrivers.length - 1) {
                     html += `
                     <div style="page-break-after: always; margin-bottom: 20px;">
                         <div class="admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
