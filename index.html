@@ -208,6 +208,7 @@
             display: flex; justify-content: space-between; align-items: center;
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
+
         /* --- تنسيقات صفحة الإحصائيات --- */
         #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
         .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
@@ -350,6 +351,7 @@
             </button>
         </div>
     </footer>
+    
     <div id="adminStatsPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; overflow-y: auto;">
         <div class="admin-header">
             <h2>📊 إحصائيات وتقييم المناديب</h2>
@@ -359,7 +361,7 @@
         <button onclick="downloadStatsPDF()" class="pdf-btn">📥 تحميل التقرير (PDF)</button>
         
         <div id="pdfContentArea" style="background: #f4f7fe; padding: 15px;">
-            <div id="statsCardsGrid" class="admin-grid">
+            <div id="statsCardsGrid">
                 </div>
         </div>
     </div>
@@ -485,7 +487,6 @@
         }
 
         // 7. دخول الشركاء (المطاعم)
-       // 7. دخول الشركاء (المطاعم) - مع إضافة تفاصيل الطلب
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
@@ -493,7 +494,6 @@
             
             if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
 
-            // جلب طلبات المطعم مع تنظيف المسافات
             const myOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
             
             if (myOrders.length === 0) { alert("لا توجد طلبات مسجلة لهذا المطعم"); return; }
@@ -501,17 +501,11 @@
             let totalOrdersCount = 0;
             let totalAmountSum = 0;
 
-            // إضافة عمود "التفاصيل" في رأس الجدول
             let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th></tr></thead><tbody>`;
             
             myOrders.forEach(row => {
-                // استخراج التاريخ من العمود E
                 let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
-                
-                // استخراج تفاصيل الطلبية من العمود F (رقم 5 برمجياً)
                 let orderDetails = row[5] ? row[5].toString() : "---";
-                
-                // الاعتماد على العمود I (المجموع الرقمي) أو العمود G
                 let rawPriceStr = (row[8] !== undefined && row[8] !== "") ? row[8].toString() : (row[6] ? row[6].toString() : "0");
                 rawPriceStr = rawPriceStr.replace(/,/g, '.');
                 let price = parseFloat(rawPriceStr);
@@ -523,7 +517,6 @@
                 totalOrdersCount++;
                 totalAmountSum += price;
 
-                // إضافة خلية التفاصيل في صفوف الجدول
                 html += `<tr>
                     <td>${row[2]}</td>
                     <td dir="ltr">${dateStr}</td>
@@ -534,7 +527,6 @@
             });
             html += `</tbody></table>`;
             
-            // شريط الملخص الخاص بالمطعم
             let summaryHtml = `
             <div style="display:flex; justify-content:space-around; background:#f4f7fe; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #ddd;">
                 <div style="text-align:center;">
@@ -559,7 +551,6 @@
             const modal = document.getElementById("imageModal");
             const adminPanel = document.getElementById("adminPanel");
 
-            // زر الصورة
             document.getElementById("showDeductionBtn").onclick = function() {
                 modal.style.display = "block";
             };
@@ -567,30 +558,27 @@
                 modal.style.display = "none";
             };
 
-            // زر الإدارة
-           document.getElementById("adminLoginBtn").onclick = function() {
-    let pwd = prompt("كلمة مرور الإدارة:");
-    if (pwd && btoa(pwd) === "OTA5MA==") {
-        adminPanel.style.display = "block";
-        generateAdminReport();
-    } else if (pwd !== null) {
-        alert("كلمة المرور غير صحيحة ❌");
-    }
-};
+            document.getElementById("adminLoginBtn").onclick = function() {
+                let pwd = prompt("كلمة مرور الإدارة:");
+                if (pwd && btoa(pwd) === "OTA5MA==") {
+                    adminPanel.style.display = "block";
+                    generateAdminReport();
+                } else if (pwd !== null) {
+                    alert("كلمة المرور غير صحيحة ❌");
+                }
+            };
             document.getElementById("closeAdminPanel").onclick = function() {
                 adminPanel.style.display = "none";
             };
 
-            // إغلاق النوافذ عند الضغط خارجها
             window.onclick = function(event) {
                 if (event.target == modal) modal.style.display = "none";
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
-        });// 9. دالة تقرير الإدارة (تم إصلاح مشكلة التحميل ومطابقة الأعمدة)
-        // 9. دالة تقرير الإدارة (تقرأ الأرقام النظيفة من السيرفر وتعالج الكسور)
-       // 9. دالة تقرير الإدارة (قراءة دقيقة ومطابقة 100% لجوجل شيت)
-        // 9. دالة تقرير الإدارة (مضادة لثغرات التواريخ والمسافات - مطابقة 100%)
-       function generateAdminReport() {
+        });
+
+        // 9. دالة تقرير الإدارة
+        function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
@@ -610,9 +598,8 @@
             let globalTotalOrders = 0;
             let globalTotalRevenue = 0;
             let globalTotalNet = 0;
-            let globalTotalDeductions = 0; // المتغير الجديد لحساب إجمالي الاستقطاعات
+            let globalTotalDeductions = 0; 
 
-            // --- الفلتر الصارم والذكي (لفك الأرقام الملتصقة) ---
             const safeParse = (str) => {
                 if (!str) return 0;
                 let s = str.toString().trim();
@@ -636,7 +623,6 @@
                 return sum;
             };
 
-            // تجاوز الصف الأول (عناوين الشيت)
             for (let i = 1; i < ded.length; i++) {
                 let row = ded[i];
                 let name = row[1] ? row[1].toString().trim() : "";
@@ -674,7 +660,7 @@
                 let net = Math.round((total - deds) * 1000) / 1000;
                 
                 globalTotalNet += net;
-                globalTotalDeductions += deds; // جمع استقطاعات كل مندوب للإجمالي العام
+                globalTotalDeductions += deds; 
 
                 html += `
                 <div class="driver-card" data-name="${name}">
@@ -690,7 +676,6 @@
                 </div>`;
             }
 
-            // تحديث الملخص العام بإضافة مربع (إجمالي الاستقطاع)
             summaryContainer.innerHTML = `
                 <div class="summary-item"><span>إجمالي الطلبات</span><strong>${globalTotalOrders}</strong></div>
                 <div class="summary-item"><span>إجمالي المحصل</span><strong class="text-success">${(Math.round(globalTotalRevenue * 1000) / 1000).toFixed(3)}</strong></div>
@@ -700,6 +685,7 @@
 
             gridContainer.innerHTML = html;
         }
+
         // 10. دالة البحث المباشر في لوحة الإدارة
         function filterDrivers() {
             let input = document.getElementById('driverSearch').value.toLowerCase();
@@ -714,6 +700,7 @@
                 }
             });
         }
+
         // --- دوال لوحة الإحصائيات ومستويات المناديب ---
         function openStatsPanel() {
             document.getElementById("adminStatsPanel").style.display = "block";
@@ -731,7 +718,6 @@
             let totalGlobalOrders = 0;
             const ded = window.globalData.deductions || window.globalData.Deductions || [];
 
-            // جمع عدد الطلبات فقط (تجاهل تام لأي مبالغ مالية)
             for (let i = 1; i < ded.length; i++) {
                 let name = ded[i][1] ? ded[i][1].toString().trim() : "";
                 if (!name) continue;
@@ -742,58 +728,66 @@
                 totalGlobalOrders += ordersCount;
             }
 
-            // ترتيب المناديب من الأعلى إنجازاً إلى الأقل
             let sortedDrivers = Object.keys(drivers).map(name => {
                 return { name: name, orders: drivers[name] };
             }).sort((a, b) => b.orders - a.orders);
 
             let html = "";
-            sortedDrivers.forEach(d => {
-                // حساب النسبة المئوية من إجمالي طلبات الفريق
+            let pageBuffer = "";
+
+            sortedDrivers.forEach((d, index) => {
                 let percentage = totalGlobalOrders > 0 ? ((d.orders / totalGlobalOrders) * 100).toFixed(1) : 0;
                 
-                // تحديد المستوى بناءً على عدد الطلبات
                 let level = "مبتدئ 🥉";
-                let color = "#cd7f32"; // برونزي
+                let color = "#cd7f32"; 
                 
                 if (d.orders >= 100) { level = "ماسي 💎"; color = "#9b59b6"; }
                 else if (d.orders >= 50) { level = "محترف 🥇"; color = "#f1c40f"; }
                 else if (d.orders >= 20) { level = "متقدم 🥈"; color = "#95a5a6"; }
 
-                html += `
+                pageBuffer += `
                 <div class="stat-card">
                     <div class="stat-header">
                         <span class="stat-name">👤 ${d.name}</span>
                         <span class="stat-level" style="background:${color}22; color:${color}; border: 1px solid ${color};">${level}</span>
                     </div>
                     <div class="stat-details">
-                        <span>إجمالي الطلبات المنجزة: <span style="color:${color}; font-size:1.2rem;">${d.orders}</span></span>
+                        <span>إجمالي الطلبات: <span style="color:${color}; font-size:1.2rem;">${d.orders}</span></span>
                         <span>النسبة: %${percentage}</span>
                     </div>
                     <div class="progress-bg">
                         <div class="progress-fill" style="width: ${percentage}%; background-color: ${color};"></div>
                     </div>
                 </div>`;
+
+                // بعد كل 4 مناديب يتم إغلاق حاوية الشبكة (Grid) ووضع فاصل صفحة (Page Break) للـ PDF
+                if ((index + 1) % 4 === 0 || index === sortedDrivers.length - 1) {
+                    html += `
+                    <div style="page-break-after: always; margin-bottom: 20px;">
+                        <div class="admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                            ${pageBuffer}
+                        </div>
+                    </div>`;
+                    pageBuffer = ""; // تفريغ الذاكرة للـ 4 مناديب القادمين
+                }
             });
 
             statsGrid.innerHTML = html || "<p style='text-align:center;'>لا توجد بيانات حالياً.</p>";
         }
 
-        // دالة تحويل الشاشة إلى ملف PDF
         function downloadStatsPDF() {
             const element = document.getElementById('pdfContentArea');
             const opt = {
                 margin:       10,
                 filename:     'إحصائيات_مناديب_نعاون.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
+                image:        { type: 'jpeg', quality: 1 },
                 html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#f4f7fe' },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             
-            // إضافة رسالة للمستخدم أثناء التحميل
             let btn = document.querySelector('.pdf-btn');
             let originalText = btn.innerText;
-            btn.innerText = "⏳ جاري تجهيز الملف...";
+            btn.innerText = "⏳ جاري تجهيز الملف بدقة عالية...";
             
             html2pdf().set(opt).from(element).save().then(() => {
                 btn.innerText = originalText;
