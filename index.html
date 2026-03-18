@@ -6,6 +6,10 @@
     <meta name="theme-color" content="#D4AF37">
     <title>فريق نعاون لخدمات التوصيل</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
             --gold: #D4AF37;
@@ -209,7 +213,7 @@
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
 
-        /* --- تنسيقات صفحة الإحصائيات --- */
+        /* --- تنسيقات صفحة الإحصائيات والمخطط --- */
         #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
         .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -220,8 +224,8 @@
         .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
         .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
         .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
+        .chart-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -361,6 +365,13 @@
         <button onclick="downloadStatsPDF()" class="pdf-btn">📥 تحميل التقرير (PDF)</button>
         
         <div id="pdfContentArea" style="background: #f4f7fe; padding: 15px;">
+            <div class="chart-container" style="page-break-after: always;">
+                <h3 style="margin-top:0; color:var(--text); text-align:right;">أداء الفريق (عدد الطلبات)</h3>
+                <div style="height: 300px;">
+                    <canvas id="driversChart"></canvas>
+                </div>
+            </div>
+
             <div id="statsCardsGrid">
                 </div>
         </div>
@@ -394,11 +405,10 @@
     </div>
 
     <script>
-        // 1. إعدادات الرابط والبيانات
         const scriptURL = "https://script.google.com/macros/s/AKfycbyBSoOGi3MhBHCAAR7s7QGsWn6P3F7C_I65p5uddLdhDJpOxkT5kNpqCPYWTK1yhEdUrg/exec";
         window.globalData = null;
+        window.driversChartInstance = null; // متغير لحفظ المخطط البياني
 
-        // 2. جلب البيانات تلقائياً
         async function fetchGoogleData() {
             try {
                 const response = await fetch(scriptURL);
@@ -410,7 +420,6 @@
         }
         window.addEventListener('load', fetchGoogleData);
 
-        // 3. وظائف التنقل
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
             document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
@@ -423,7 +432,6 @@
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
-        // 4. نظام دخول المندوب
         function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
             if (cardId !== "") {
@@ -436,7 +444,6 @@
             }
         }
 
-        // 5. إرسال البيانات (استقطاع)
         async function submitDeduction(e) {
             e.preventDefault();
             const loader = document.getElementById('loader1');
@@ -461,7 +468,6 @@
             }
         }
 
-        // 6. إرسال البيانات (فاتورة)
         async function submitInvoice(e) {
             e.preventDefault();
             const loader = document.getElementById('loader2');
@@ -486,7 +492,6 @@
             }
         }
 
-        // 7. دخول الشركاء (المطاعم)
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
@@ -546,7 +551,6 @@
             document.getElementById('dashboardBlock').style.display = 'block';
         }
 
-        // 8. أزرار الفوتر (جدول الاستقطاع + الإدارة)
         document.addEventListener("DOMContentLoaded", function() {
             const modal = document.getElementById("imageModal");
             const adminPanel = document.getElementById("adminPanel");
@@ -577,7 +581,6 @@
             };
         });
 
-        // 9. دالة تقرير الإدارة
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
@@ -686,7 +689,6 @@
             gridContainer.innerHTML = html;
         }
 
-        // 10. دالة البحث المباشر في لوحة الإدارة
         function filterDrivers() {
             let input = document.getElementById('driverSearch').value.toLowerCase();
             let cards = document.querySelectorAll('.driver-card');
@@ -701,7 +703,7 @@
             });
         }
 
-        // --- دوال لوحة الإحصائيات ومستويات المناديب ---
+        // --- دوال لوحة الإحصائيات والمخططات ---
         function openStatsPanel() {
             document.getElementById("adminStatsPanel").style.display = "block";
             generateStatsReport();
@@ -732,6 +734,44 @@
                 return { name: name, orders: drivers[name] };
             }).sort((a, b) => b.orders - a.orders);
 
+            // --- رسم المخطط البياني (Chart.js) ---
+            const chartCanvas = document.getElementById('driversChart');
+            if (chartCanvas) {
+                const ctx = chartCanvas.getContext('2d');
+                
+                // مسح المخطط القديم إذا وجد لتجنب التداخل
+                if (window.driversChartInstance) {
+                    window.driversChartInstance.destroy();
+                }
+
+                const labels = sortedDrivers.map(d => d.name);
+                const data = sortedDrivers.map(d => d.orders);
+
+                window.driversChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'الطلبات المنجزة',
+                            data: data,
+                            backgroundColor: '#D4AF37',
+                            borderRadius: 5,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }, // إخفاء المفتاح
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                            x: { ticks: { font: { family: 'Tajawal' } } }
+                        }
+                    }
+                });
+            }
+            // ------------------------------------
+
             let html = "";
             let pageBuffer = "";
 
@@ -760,7 +800,6 @@
                     </div>
                 </div>`;
 
-                // بعد كل 4 مناديب يتم إغلاق حاوية الشبكة (Grid) ووضع فاصل صفحة (Page Break) للـ PDF
                 if ((index + 1) % 4 === 0 || index === sortedDrivers.length - 1) {
                     html += `
                     <div style="page-break-after: always; margin-bottom: 20px;">
@@ -768,7 +807,7 @@
                             ${pageBuffer}
                         </div>
                     </div>`;
-                    pageBuffer = ""; // تفريغ الذاكرة للـ 4 مناديب القادمين
+                    pageBuffer = ""; 
                 }
             });
 
