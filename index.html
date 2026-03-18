@@ -208,7 +208,19 @@
             display: flex; justify-content: space-between; align-items: center;
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
+        /* --- تنسيقات صفحة الإحصائيات --- */
+        #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
+        .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
+        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .stat-name { font-size: 1.2rem; font-weight: bold; color: var(--text); }
+        .stat-level { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+        .stat-details { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 1rem; color: #444; font-weight: bold; }
+        .progress-bg { background: #e0e0e0; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+        .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
+        .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -338,6 +350,19 @@
             </button>
         </div>
     </footer>
+    <div id="adminStatsPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; overflow-y: auto;">
+        <div class="admin-header">
+            <h2>📊 إحصائيات وتقييم المناديب</h2>
+            <span onclick="document.getElementById('adminStatsPanel').style.display='none'" class="close-admin">&times;</span>
+        </div>
+        
+        <button onclick="downloadStatsPDF()" class="pdf-btn">📥 تحميل التقرير (PDF)</button>
+        
+        <div id="pdfContentArea" style="background: #f4f7fe; padding: 15px;">
+            <div id="statsCardsGrid" class="admin-grid">
+                </div>
+        </div>
+    </div>
 
     <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; overflow-y: auto;">
         <div class="admin-header">
@@ -347,6 +372,11 @@
         
         <div class="admin-search-container">
             <input type="text" id="driverSearch" class="admin-search" onkeyup="filterDrivers()" placeholder="🔍 ابحث عن اسم المندوب...">
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="openStatsPanel()" style="background: var(--gold); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                📈 عرض إحصائيات ومستويات المناديب
+            </button>
         </div>
 
         <div id="adminSummary" class="admin-summary">
@@ -682,6 +712,91 @@
                 } else {
                     card.style.display = 'none';
                 }
+            });
+        }
+        // --- دوال لوحة الإحصائيات ومستويات المناديب ---
+        function openStatsPanel() {
+            document.getElementById("adminStatsPanel").style.display = "block";
+            generateStatsReport();
+        }
+
+        function generateStatsReport() {
+            const statsGrid = document.getElementById("statsCardsGrid");
+            if (!window.globalData) {
+                statsGrid.innerHTML = "<p style='text-align:center;'>جاري تحميل البيانات...</p>";
+                return;
+            }
+
+            let drivers = {};
+            let totalGlobalOrders = 0;
+            const ded = window.globalData.deductions || window.globalData.Deductions || [];
+
+            // جمع عدد الطلبات فقط (تجاهل تام لأي مبالغ مالية)
+            for (let i = 1; i < ded.length; i++) {
+                let name = ded[i][1] ? ded[i][1].toString().trim() : "";
+                if (!name) continue;
+                
+                let ordersCount = parseInt(ded[i][2]) || 0;
+                if (!drivers[name]) drivers[name] = 0;
+                drivers[name] += ordersCount;
+                totalGlobalOrders += ordersCount;
+            }
+
+            // ترتيب المناديب من الأعلى إنجازاً إلى الأقل
+            let sortedDrivers = Object.keys(drivers).map(name => {
+                return { name: name, orders: drivers[name] };
+            }).sort((a, b) => b.orders - a.orders);
+
+            let html = "";
+            sortedDrivers.forEach(d => {
+                // حساب النسبة المئوية من إجمالي طلبات الفريق
+                let percentage = totalGlobalOrders > 0 ? ((d.orders / totalGlobalOrders) * 100).toFixed(1) : 0;
+                
+                // تحديد المستوى بناءً على عدد الطلبات
+                let level = "مبتدئ 🥉";
+                let color = "#cd7f32"; // برونزي
+                
+                if (d.orders >= 100) { level = "ماسي 💎"; color = "#9b59b6"; }
+                else if (d.orders >= 50) { level = "محترف 🥇"; color = "#f1c40f"; }
+                else if (d.orders >= 20) { level = "متقدم 🥈"; color = "#95a5a6"; }
+
+                html += `
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-name">👤 ${d.name}</span>
+                        <span class="stat-level" style="background:${color}22; color:${color}; border: 1px solid ${color};">${level}</span>
+                    </div>
+                    <div class="stat-details">
+                        <span>إجمالي الطلبات المنجزة: <span style="color:${color}; font-size:1.2rem;">${d.orders}</span></span>
+                        <span>النسبة: %${percentage}</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+                    </div>
+                </div>`;
+            });
+
+            statsGrid.innerHTML = html || "<p style='text-align:center;'>لا توجد بيانات حالياً.</p>";
+        }
+
+        // دالة تحويل الشاشة إلى ملف PDF
+        function downloadStatsPDF() {
+            const element = document.getElementById('pdfContentArea');
+            const opt = {
+                margin:       10,
+                filename:     'إحصائيات_مناديب_نعاون.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#f4f7fe' },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // إضافة رسالة للمستخدم أثناء التحميل
+            let btn = document.querySelector('.pdf-btn');
+            let originalText = btn.innerText;
+            btn.innerText = "⏳ جاري تجهيز الملف...";
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerText = originalText;
             });
         }
     </script>
