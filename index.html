@@ -139,7 +139,11 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* --- تنسيقات لوحة الإدارة الاحترافية --- */
+        /* --- تنسيقات التنبيه الإداري (Pop-up) --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .announcement-box { background: white; border-radius: 20px; padding: 30px; text-align: right; max-width: 400px; width: 100%; border-top: 6px solid #e74c3c; animation: slideUp 0.4s ease; }
+
+        /* --- تنسيقات لوحة الإدارة الاحترافية والتبويبات --- */
         #adminPanel {
             background-color: #f4f7fe !important;
             font-family: 'Tajawal', sans-serif;
@@ -161,10 +165,14 @@
             transition: 0.3s;
         }
         .close-admin:hover { transform: scale(1.1); }
-        .admin-search-container {
-            padding: 0 20px; margin-top: -25px;
-            position: relative; z-index: 10;
-        }
+        
+        .admin-tabs { display: flex; justify-content: center; gap: 10px; margin-top: -20px; position: relative; z-index: 10; padding: 0 20px; }
+        .tab-btn { background: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: bold; color: var(--text); box-shadow: 0 5px 15px rgba(0,0,0,0.08); cursor: pointer; transition: 0.3s; flex: 1; }
+        .tab-btn.active { background: var(--gold); color: white; }
+        .archive-btn { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: inline-block; box-shadow: 0 4px 10px rgba(231,76,60,0.2); transition: 0.3s;}
+        .archive-btn:hover { background: #c0392b; }
+
+        .admin-search-container { padding: 0 20px; position: relative; z-index: 10; }
         .admin-search {
             width: 100%; padding: 15px 20px;
             border-radius: 30px; border: none;
@@ -238,6 +246,18 @@
     <div id="mainMenu" class="menu-container">
         <button class="main-btn" onclick="showSection('driverLoginSec')">لوحة المناديب</button>
         <button class="main-btn" onclick="showSection('settingsSec')">الإعدادات</button>
+    </div>
+
+    <div id="announcementModal" class="modal-overlay">
+        <div class="announcement-box">
+            <h3 style="color: #e74c3c; margin-top:0;">📢 تنبيه إداري هام</h3>
+            <p style="font-size: 1.05rem; line-height: 1.7; color: #444;">
+                الالتزام بتعليمات الفريق وحقوقه كما تُحب ان يلتزم الاخرين بحقوقك، يجبنك الإحراجات والمخالفات.
+                <br><br>
+                <span style="color: #c0392b; font-weight: bold;">الاداره تتعب ومجهود عالي بدون تقدير و لا التزام.</span>
+            </p>
+            <button class="submit-btn" style="margin-top: 15px;" onclick="acceptAnnouncement()">موافق، قرأت التعليمات</button>
+        </div>
     </div>
 
     <div id="driverLoginSec" class="page-section">
@@ -374,20 +394,31 @@
             <span id="closeAdminPanel" class="close-admin">&times;</span>
         </div>
         
-        <div class="admin-search-container">
-            <input type="text" id="driverSearch" class="admin-search" onkeyup="filterDrivers()" placeholder="🔍 ابحث عن اسم المندوب...">
-        </div>
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="openStatsPanel()" style="background: var(--gold); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                📈 عرض إحصائيات ومستويات المناديب
-            </button>
+        <div class="admin-tabs">
+            <button id="tabDrivers" class="tab-btn active" onclick="switchAdminTab('drivers')">👤 المناديب</button>
+            <button id="tabRests" class="tab-btn" onclick="switchAdminTab('rests')">🍔 المطاعم</button>
         </div>
 
-        <div id="adminSummary" class="admin-summary">
+        <div id="driversAdminView">
+            <div class="admin-search-container" style="margin-top: 15px;">
+                <input type="text" id="driverSearch" class="admin-search" onkeyup="filterDrivers()" placeholder="🔍 ابحث عن اسم المندوب...">
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <button onclick="openStatsPanel()" style="background: var(--gold); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    📈 عرض إحصائيات ومستويات المناديب
+                </button>
+                <button onclick="archiveCycle()" class="archive-btn">🔄 تصفير الدورة المالية وأرشفتها</button>
             </div>
 
-        <div id="adminCardsGrid" class="admin-grid">
-            </div>
+            <div id="adminSummary" class="admin-summary"></div>
+
+            <div id="adminCardsGrid" class="admin-grid"></div>
+        </div>
+
+        <div id="restsAdminView" style="display: none; margin-top: 20px;">
+            <div id="restsCardsGrid" class="admin-grid"></div>
+        </div>
     </div>
 
     <div id="imageModal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); text-align: center;">
@@ -396,7 +427,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbyBSoOGi3MhBHCAAR7s7QGsWn6P3F7C_I65p5uddLdhDJpOxkT5kNpqCPYWTK1yhEdUrg/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwU7lo2Nrt6xDsKFsjIWg-flZYXK0xvrsaFD3ltLKXL8SvwJze0xTPcn91cWmjHywDvLQ/exec";
         window.globalData = null;
 
         async function fetchGoogleData() {
@@ -428,10 +459,16 @@
                 document.getElementById('hiddenCardId1').value = cardId;
                 document.getElementById('hiddenCardId2').value = cardId;
                 document.getElementById('driverWelcome').innerText = "رقم البطاقة: " + cardId;
-                showSection('driverOptionsSec');
+                // إظهار نافذة التنبيه الإجباري بدلاً من الدخول مباشرة
+                document.getElementById('announcementModal').style.display = 'flex';
             } else {
                 alert("الرجاء إدخال رقم البطاقة");
             }
+        }
+
+        function acceptAnnouncement() {
+            document.getElementById('announcementModal').style.display = 'none';
+            showSection('driverOptionsSec');
         }
 
         async function submitDeduction(e) {
@@ -557,6 +594,7 @@
                 if (pwd && btoa(pwd) === "OTA5MA==") {
                     adminPanel.style.display = "block";
                     generateAdminReport();
+                    generateRestaurantsReport(); // تحميل إحصائيات المطاعم للإدارة
                 } else if (pwd !== null) {
                     alert("كلمة المرور غير صحيحة ❌");
                 }
@@ -570,6 +608,22 @@
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
         });
+
+        // دوال التنقل في تبويبات الإدارة
+        function switchAdminTab(tab) {
+            document.getElementById('tabDrivers').classList.remove('active');
+            document.getElementById('tabRests').classList.remove('active');
+            document.getElementById('driversAdminView').style.display = 'none';
+            document.getElementById('restsAdminView').style.display = 'none';
+
+            if (tab === 'drivers') {
+                document.getElementById('tabDrivers').classList.add('active');
+                document.getElementById('driversAdminView').style.display = 'block';
+            } else {
+                document.getElementById('tabRests').classList.add('active');
+                document.getElementById('restsAdminView').style.display = 'block';
+            }
+        }
 
         function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
@@ -679,6 +733,38 @@
             gridContainer.innerHTML = html;
         }
 
+        // توليد إحصائيات المطاعم للإدارة
+        function generateRestaurantsReport() {
+            const inv = window.globalData.invoices || window.globalData.Invoices || [];
+            let rests = {};
+
+            for (let i = 1; i < inv.length; i++) {
+                let name = inv[i][1] ? inv[i][1].toString().trim() : "";
+                if (!name) continue;
+                let rawPrice = (inv[i][8] !== undefined && inv[i][8] !== "") ? inv[i][8].toString() : (inv[i][6] ? inv[i][6].toString() : "0");
+                let price = parseFloat(rawPrice.replace(/,/g, '.'));
+                if (rawPrice.includes('T') || isNaN(price)) price = 0;
+
+                if (!rests[name]) rests[name] = { count: 0, total: 0 };
+                rests[name].count += 1;
+                rests[name].total += price;
+            }
+
+            let html = "";
+            for (let name in rests) {
+                let r = rests[name];
+                html += `
+                <div class="driver-card" style="border-top-color:#e67e22;">
+                    <div class="driver-name">🍔 ${name}</div>
+                    <div class="driver-net" style="background:#fdf2e9;">
+                        <span>إجمالي الطلبات: <strong>${r.count}</strong></span>
+                        <span style="color:#e67e22;">الإجمالي: <strong>${r.total.toFixed(3)} ر.ع</strong></span>
+                    </div>
+                </div>`;
+            }
+            document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد فواتير مطاعم حالياً.</p>";
+        }
+
         function filterDrivers() {
             let input = document.getElementById('driverSearch').value.toLowerCase();
             let cards = document.querySelectorAll('.driver-card');
@@ -691,6 +777,33 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // --- نظام الأرشفة والتصفير ---
+        async function archiveCycle() {
+            let pass = prompt("تحذير: هذه العملية ستقوم بنقل وتصفير جميع بيانات المناديب والمطاعم لتبدأ دورة جديدة.\nأدخل كلمة المرور للتأكيد:");
+            if(pass !== "res9090") {
+                if (pass !== null) alert("كلمة المرور خاطئة ❌");
+                return;
+            }
+
+            let btn = document.querySelector('.archive-btn');
+            let originalText = btn.innerText;
+            btn.innerText = "⏳ جاري الأرشفة والتصفير...";
+            btn.disabled = true;
+
+            let formData = new FormData();
+            formData.append('action', 'archiveData');
+
+            try {
+                await fetch(scriptURL, { method: "POST", body: formData });
+                alert("تم أرشفة وتصفير الدورة بنجاح! 🎉");
+                location.reload();
+            } catch (error) {
+                alert("حدث خطأ أثناء الأرشفة.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
 
         // --- دوال لوحة الإحصائيات والمستويات ---
