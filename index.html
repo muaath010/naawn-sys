@@ -628,7 +628,7 @@
             }
         }
 
-        function generateAdminReport() {
+      function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
@@ -650,40 +650,58 @@
             let globalTotalNet = 0;
             let globalTotalDeductions = 0; 
             
-            const safeParse = (str) => {
-            if (!str) return 0;
-            let s = str.toString().trim();
-            
-            // 1. تجاهل التواريخ حتى لا يتم جمعها عن طريق الخطأ
-            if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
-                return 0; 
-            }
+            // الدالة الأقوى لتنظيف الأرقام (تدعم الأرقام العربية الهندية)
+            const safeParse = (val) => {
+                if (val === null || val === undefined || val === "") return 0;
+                if (typeof val === 'number') return val;
 
-            // 2. تحويل الفاصلة العربية والإنجليزية إلى نقطة عشرية
-            let cleanStr = s.replace(/[,،]/g, '.');
-            
-            // 3. استخراج الأرقام فقط (يستخرج 35 أو 1.5 ويتجاهل أي نصوص أو حروف مثل "ريال")
-            let matches = cleanStr.match(/\d*\.?\d+/g); 
-            
-            let sum = 0;
-            if (matches) {
-                matches.forEach(m => {
-                    let val = parseFloat(m);
-                    // 4. يتم جمع الرقم بشرط أن يكون أقل من 500 ريال (كحماية من الأخطاء الإملائية الكارثية)
-                    if (!isNaN(val) && val < 500) { 
-                        sum += val;
-                    }
-                });
-            }
-            return sum;
-        };
+                let s = val.toString().trim();
+                
+                // تجاهل التواريخ
+                if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
+                    return 0; 
+                }
+
+                // 1. ترجمة الأرقام العربية (١٢٣) إلى إنجليزية (123) ليفهمها الموقع
+                s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+                
+                // 2. تحويل الفواصل بأنواعها إلى نقطة
+                let cleanStr = s.replace(/[,،]/g, '.');
+                
+                // 3. استخراج جميع الأرقام من النص وتجاهل أي حروف أو مسافات
+                let matches = cleanStr.match(/-?\d*\.?\d+/g); 
+                
+                let sum = 0;
+                if (matches) {
+                    matches.forEach(m => {
+                        let num = parseFloat(m);
+                        if (!isNaN(num) && num < 1000) { 
+                            sum += num;
+                        }
+                    });
+                }
+                return sum;
+            };
+
             for (let i = 1; i < ded.length; i++) {
                 let row = ded[i];
+                
+                // تخطي صف "الإجمالي" الذي يصنعه جوجل شيت في أسفل الملف إن وجد
+                if (row[0] && row[0].toString().includes("الإجمالي")) continue;
+
                 let name = row[1] ? row[1].toString().trim() : "";
-                if (!name) continue;
+                
+                // تجميع المبالغ للمناديب الذين نسوا كتابة أسمائهم بدلاً من حذفها
+                if (!name) {
+                    if (row[4] || row[5]) name = "طلبات غير مسجلة (بدون اسم)";
+                    else continue; 
+                }
 
                 let ordersCount = parseInt(row[2]) || 0;
-                let deductionAmount = safeParse(row[5]);
+                
+                // جلب مبلغ الاستقطاع (نقوم بسحبه من العمود المخفي H إذا كان موجوداً لضمان الدقة، وإلا نجلبه من F)
+                let deductionAmount = (row[7] !== undefined && row[7] !== "") ? parseFloat(row[7]) : safeParse(row[5]);
+                if (isNaN(deductionAmount)) deductionAmount = safeParse(row[5]);
 
                 let revenueAmount = 0;
                 let amountsString = row[4] || "";
