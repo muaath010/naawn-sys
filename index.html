@@ -431,16 +431,27 @@
         window.globalData = null;
 
         async function fetchGoogleData() {
+            // 1. عرض البيانات من ذاكرة الهاتف فوراً (بسرعة البرق)
+            let cachedData = localStorage.getItem('googleDataCache');
+            if (cachedData) {
+                window.globalData = JSON.parse(cachedData);
+                console.log("⚡ تم تحميل البيانات من ذاكرة الهاتف فوراً");
+            }
+
+            // 2. جلب البيانات الجديدة من سيرفر جوجل في الخلفية بصمت
             try {
                 const response = await fetch(scriptURL);
                 window.globalData = await response.json();
-                console.log("تم تحديث البيانات بنجاح");
+                
+                // حفظ البيانات الجديدة في الهاتف للمرات القادمة
+                localStorage.setItem('googleDataCache', JSON.stringify(window.globalData));
+                console.log("🔄 تم تحديث البيانات من جوجل بنجاح");
             } catch (error) {
                 console.error("خطأ في جلب البيانات:", error);
             }
         }
         window.addEventListener('load', fetchGoogleData);
-
+        
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
             document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
