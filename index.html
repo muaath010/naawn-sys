@@ -654,19 +654,28 @@
             if (!str) return 0;
             let s = str.toString().trim();
             
-            // 1. تجاهل التواريخ والأوقات لكي لا يتم جمعها بالخطأ
+            // 1. تجاهل التواريخ حتى لا يتم جمعها عن طريق الخطأ
             if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
                 return 0; 
             }
 
-            // 2. تنظيف النص: تحويل الفواصل (،) و (,) إلى نقطة (.) وإزالة المسافات
-            let cleanStr = s.replace(/[,،]/g, '.').replace(/\s/g, '');
+            // 2. تحويل الفاصلة العربية والإنجليزية إلى نقطة عشرية
+            let cleanStr = s.replace(/[,،]/g, '.');
             
-            // 3. تحويل النص النظيف إلى رقم حقيقي يقبل كل المبالغ
-            let val = parseFloat(cleanStr);
+            // 3. استخراج الأرقام فقط (يستخرج 35 أو 1.5 ويتجاهل أي نصوص أو حروف مثل "ريال")
+            let matches = cleanStr.match(/\d*\.?\d+/g); 
             
-            // 4. إرجاع الرقم، وإذا كان النص فارغاً أو حروفاً يعيد 0
-            return isNaN(val) ? 0 : val;
+            let sum = 0;
+            if (matches) {
+                matches.forEach(m => {
+                    let val = parseFloat(m);
+                    // 4. يتم جمع الرقم بشرط أن يكون أقل من 500 ريال (كحماية من الأخطاء الإملائية الكارثية)
+                    if (!isNaN(val) && val < 500) { 
+                        sum += val;
+                    }
+                });
+            }
+            return sum;
         };
             for (let i = 1; i < ded.length; i++) {
                 let row = ded[i];
