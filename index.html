@@ -231,6 +231,12 @@
         .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
         .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
         .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
+        
+        /* --- تنسيقات معرض الصور الجديد للإدارة --- */
+        .invoice-img-card { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .invoice-img-card img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s; }
+        .invoice-img-card img:hover { transform: scale(1.05); }
+        .invoice-img-card .img-caption { padding: 8px; font-size: 13px; text-align: center; background: #f9f9f9; font-weight: bold; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -335,6 +341,13 @@
                 <label>قيمة الطلبية (ر.ع)</label>
                 <input type="number" step="0.001" name="price" required>
             </div>
+            
+            <div class="input-group" style="background: #fdfaf0; padding: 15px; border-radius: 12px; border: 1px dashed var(--gold);">
+                <label style="color: var(--gold); font-size: 1.1rem;">📷 تصوير فاتورة المطعم (اختياري)</label>
+                <input type="file" id="invoiceImage" accept="image/*" capture="camera" style="background: #fff; padding: 8px;">
+                <small style="color: #7f8c8d; display: block; margin-top: 8px;">يمكنك التصوير مباشرة من الكاميرا أو اختيار صورة من الهاتف للإثبات</small>
+            </div>
+            
             <button type="submit" class="submit-btn">إرسال الفاتورة</button>
             <div id="loader2" class="loader"></div>
         </form>
@@ -388,6 +401,14 @@
         </div>
     </div>
 
+    <div id="adminImagesSec" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10005; overflow-y: auto; background-color: #f4f7fe; font-family: 'Tajawal', sans-serif;">
+        <div class="admin-header">
+            <h2 id="imageGalleryTitle">صور الفواتير</h2>
+            <span onclick="document.getElementById('adminImagesSec').style.display='none'" class="close-admin">&times;</span>
+        </div>
+        <div id="imagesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px;"></div>
+    </div>
+
     <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; overflow-y: auto;">
         <div class="admin-header">
             <h2>لوحة الإدارة والتقارير</h2>
@@ -427,8 +448,18 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxhqE52fOnyHNUrIJa7HhrYpZNz25yLEVLIOFMFHwfiCmj0tIz7CDhBZnsW4tJ7hyA_Hg/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbww8BsWucDq6f4pbcDS_OXnbccT5ymZa69jZb8ZrExwIRxRnt6YVlbU-5wiBK9NliyPWg/exec";
         window.globalData = null;
+
+        // دالة تحويل الصورة إلى نص لتتمكن جوجل من استلامها وحفظها
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
 
         async function fetchGoogleData() {
             // 1. عرض البيانات من ذاكرة الهاتف فوراً (بسرعة البرق)
@@ -517,6 +548,15 @@
             formData.append('action', 'addInvoice');
 
             try {
+                // التقاط الصورة وتحويلها (في حال قام المندوب بالتصوير)
+                let fileInput = document.getElementById('invoiceImage');
+                if (fileInput && fileInput.files.length > 0) {
+                    let base64Image = await getBase64(fileInput.files[0]);
+                    formData.append("imageFile", base64Image);
+                    // تسمية الصورة بشكل فريد
+                    formData.append("imageName", "Invoice_" + (formData.get("card_id") || "Img") + "_" + Date.now());
+                }
+
                 await fetch(scriptURL, { method: "POST", body: formData });
                 alert("تم إرسال الفاتورة بنجاح! ✅");
                 e.target.reset();
@@ -533,7 +573,7 @@
         function checkLogin() {
             const restName = document.getElementById('loginRestName').value.trim();
             const pass = document.getElementById('loginPass').value;
-           if (btoa(pass) !== "cmVzOTA5MA==") { 
+            if (btoa(pass) !== "cmVzOTA5MA==") { 
                 alert("الرمز السري غير صحيح ❌"); 
                 return; 
             }
@@ -756,6 +796,7 @@
                     <div class="driver-net">
                         <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
                     </div>
+                    <button class="main-btn" style="margin-top:12px; background:#f39c12; border-color:#e67e22; color:white; font-size:14px; padding:10px; width:100%; border-radius:10px;" onclick="viewDriverImages('${name}')">🖼️ عرض صور فواتير المندوب</button>
                 </div>`;
             }
 
@@ -767,6 +808,45 @@
             `;
 
             gridContainer.innerHTML = html;
+        }
+
+        // دالة عرض معرض الصور الخاصة بكل مندوب
+        function viewDriverImages(driverName) {
+            const inv = window.globalData.invoices || window.globalData.Invoices || [];
+            if (inv.length <= 1) return;
+            
+            document.getElementById('adminImagesSec').style.display = 'block';
+            document.getElementById('imageGalleryTitle').innerText = "فواتير المندوب: " + driverName;
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = ""; 
+
+            // البحث في شيت الفواتير (بافتراض أن رابط الصورة يخزن في العمود رقم 10 أي index 9)
+            const driverInvoices = inv.filter(row => 
+                row[2] && row[2].toString().trim() === driverName && row[9] && row[9].toString().trim() !== ""
+            );
+
+            if (driverInvoices.length === 0) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:30px; font-weight:bold; font-size:1.1rem;'>لم يقم هذا المندوب برفع أي صور فواتير حتى الآن.</p>";
+                return;
+            }
+
+            driverInvoices.forEach(row => {
+                let imgUrl = row[9]; 
+                let dateStr = row[4] ? row[4].toString().split('T')[0] : "بدون تاريخ";
+                let rest = row[1] || "مطعم غير معروف";
+
+                grid.innerHTML += `
+                    <div class="invoice-img-card">
+                        <a href="${imgUrl}" target="_blank">
+                            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=جاري+التحميل...'">
+                        </a>
+                        <div class="img-caption">
+                            <span style="color:#e67e22;">${rest}</span><br>
+                            <span style="color:#777; font-size:11px;">${dateStr}</span>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         // توليد إحصائيات المطاعم للإدارة
