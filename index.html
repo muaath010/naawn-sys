@@ -377,9 +377,6 @@
     </div>
 
     <footer style="text-align: center; padding: 20px; background: #f8f9fa; margin-top: auto;">
-        <!-- <button id="showDeductionBtn" style="padding: 10px 20px; background: var(--gold); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
-            جدول الاستقطاع
-        </button> -->
         <div style="margin-top: 10px;">
             <button id="adminLoginBtn" style="background: transparent; border: none; color: #aaa; text-decoration: underline; font-size: 14px; cursor: pointer;">
                  Admin
@@ -632,13 +629,11 @@
             document.getElementById('dashboardBlock').style.display = 'block';
         }
 
+        // --- الجزء الذي كان محذوفاً (الأحداث والأزرار) وتم استرجاعه ---
         document.addEventListener("DOMContentLoaded", function() {
             const modal = document.getElementById("imageModal");
             const adminPanel = document.getElementById("adminPanel");
 
-            document.getElementById("showDeductionBtn").onclick = function() {
-                modal.style.display = "block";
-            };
             document.getElementById("closeModal").onclick = function() {
                 modal.style.display = "none";
             };
@@ -648,11 +643,12 @@
                 if (pwd && btoa(pwd) === "OTA5MA==") {
                     adminPanel.style.display = "block";
                     generateAdminReport();
-                    generateRestaurantsReport(); // تحميل إحصائيات المطاعم للإدارة
+                    generateRestaurantsReport(); 
                 } else if (pwd !== null) {
                     alert("كلمة المرور غير صحيحة ❌");
                 }
             };
+
             document.getElementById("closeAdminPanel").onclick = function() {
                 adminPanel.style.display = "none";
             };
@@ -662,6 +658,7 @@
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
         });
+        // -----------------------------------------------------------
 
         // دوال التنقل في تبويبات الإدارة
         function switchAdminTab(tab) {
@@ -796,7 +793,10 @@
                     <div class="driver-net">
                         <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
                     </div>
-                    <button class="main-btn" style="margin-top:12px; background:#f39c12; border-color:#e67e22; color:white; font-size:14px; padding:10px; width:100%; border-radius:10px;" onclick="viewDriverImages('${name}')">🖼️ عرض صور فواتير المندوب</button>
+                    <div style="display: flex; gap: 5px; margin-top: 10px;">
+                        <button class="main-btn" style="background:#f39c12; border-color:#e67e22; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="viewDriverImages('${name}')">🖼️ الصور</button>
+                        <button class="main-btn" style="background:#e74c3c; border-color:#c0392b; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="downloadDriverStatement('${name}')">📄 كشف حساب</button>
+                    </div>
                 </div>`;
             }
 
@@ -981,7 +981,6 @@
                     </div>
                 </div>`;
 
-                // بعد كل 6 مناديب يتم إغلاق حاوية الشبكة ووضع فاصل صفحة (Page Break) للـ PDF
                 if ((index + 1) % 6 === 0 || index === sortedDrivers.length - 1) {
                     html += `
                     <div style="page-break-after: always; margin-bottom: 20px;">
@@ -1013,6 +1012,80 @@
             html2pdf().set(opt).from(element).save().then(() => {
                 btn.innerText = originalText;
             });
+        }
+
+        // --- إضافة الدالة المفقودة والخاصة بكشف حساب المندوب (PDF) ---
+        function downloadDriverStatement(driverName) {
+            if (!window.globalData || !window.globalData.deductions) return;
+
+            const driverData = window.globalData.deductions.filter(row => row[1] && row[1].toString().trim() === driverName);
+            
+            let pdfHtml = `
+                <div style="direction: rtl; font-family: 'Tajawal', sans-serif; padding: 20px; border: 10px solid #D4AF37;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="https://i.imgur.com/nYQiffV.png" style="width: 80px; border-radius: 50%;">
+                        <h1 style="color: #D4AF37; margin: 5px 0;">فريق نعاون لخدمات التوصيل</h1>
+                        <p style="margin: 0; font-weight: bold;">كشف حساب دوري للمندوب</p>
+                    </div>
+                    <div style="margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                        <p><b>اسم المندوب:</b> ${driverName}</p>
+                        <p><b>تاريخ إصدار الكشف:</b> ${new Date().toLocaleDateString('ar-OM')}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: center;">
+                        <thead>
+                            <tr style="background-color: #D4AF37; color: white;">
+                                <th style="padding: 10px; border: 1px solid #ddd;">التاريخ</th>
+                                <th style="padding: 10px; border: 1px solid #ddd;">عدد الطلبات</th>
+                                <th style="padding: 10px; border: 1px solid #ddd;">المبلغ المحصل</th>
+                                <th style="padding: 10px; border: 1px solid #ddd;">الاستقطاع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            let totalOrders = 0;
+            let totalRevenue = 0;
+            let totalDeds = 0;
+
+            driverData.forEach(row => {
+                let revenue = parseFloat(row[8]) || 0;
+                let ded = parseFloat(row[7]) || 0;
+                pdfHtml += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${row[3]}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${row[2]}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${revenue.toFixed(3)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${ded.toFixed(3)}</td>
+                    </tr>
+                `;
+                totalOrders += parseInt(row[2]) || 0;
+                totalRevenue += revenue;
+                totalDeds += ded;
+            });
+
+            pdfHtml += `
+                        </tbody>
+                    </table>
+                    <div style="background: #fdfaf0; padding: 15px; border-radius: 10px; text-align: right;">
+                        <p><b>إجمالي الطلبات:</b> ${totalOrders}</p>
+                        <p><b>إجمالي المحصل:</b> ${totalRevenue.toFixed(3)} ر.ع</p>
+                        <p><b>إجمالي الاستقطاع:</b> ${totalDeds.toFixed(3)} ر.ع</p>
+                        <h2 style="color: #D4AF37; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                            صافي المستحق للمندوب: ${(totalRevenue - totalDeds).toFixed(3)} ر.ع
+                        </h2>
+                    </div>
+                    <p style="text-align: center; margin-top: 30px; color: #777; font-size: 12px;">تُسلم هذه النسخة كوثيقة رسمية من فريق نعاون</p>
+                </div>
+            `;
+
+            const opt = {
+                margin: 10,
+                filename: `كشف_حساب_${driverName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(pdfHtml).set(opt).save();
         }
     </script>
 </body>
