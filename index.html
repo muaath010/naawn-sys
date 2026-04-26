@@ -139,9 +139,11 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* --- تنسيقات التنبيه الإداري (Pop-up) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .announcement-box { background: white; border-radius: 20px; padding: 30px; text-align: right; max-width: 400px; width: 100%; border-top: 6px solid #e74c3c; animation: slideUp 0.4s ease; }
 
+        /* --- تنسيقات لوحة الإدارة الاحترافية والتبويبات --- */
         #adminPanel {
             background-color: #f4f7fe !important;
             font-family: 'Tajawal', sans-serif;
@@ -187,7 +189,6 @@
         .summary-item { text-align: center; }
         .summary-item span { display: block; font-size: 0.85rem; color: #777; margin-bottom: 5px; font-weight: bold;}
         .summary-item strong { font-size: 1.2rem; color: var(--text); }
-        
         .admin-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 15px; padding: 0 20px 30px;
@@ -204,16 +205,13 @@
             margin-bottom: 15px; border-bottom: 1px solid #eee;
             padding-bottom: 10px; display: flex; align-items: center; gap: 10px;
         }
-        
-        /* التعديل: إعطاء مرونة للصناديق لتتسع لـ 4 خيارات (بما فيها المخالفات) */
         .driver-stats { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 5px;}
         .stat-box {
             text-align: center; background: #f8f9fa;
-            padding: 8px 5px; border-radius: 10px; flex: 1;
+            padding: 10px; border-radius: 10px; width: 33%;
         }
-        .stat-box span { display: block; font-size: 0.70rem; color: #666; margin-bottom: 5px; font-weight: bold;}
-        .stat-box strong { font-size: 0.95rem; direction: ltr; display: block; }
-        
+        .stat-box span { display: block; font-size: 0.75rem; color: #666; margin-bottom: 5px; font-weight: bold;}
+        .stat-box strong { font-size: 1rem; direction: ltr; display: block; }
         .text-success { color: #2ecc71 !important; }
         .text-danger { color: #e74c3c !important; }
         .text-primary { color: #3498db !important; }
@@ -222,6 +220,7 @@
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
 
+        /* --- تنسيقات صفحة الإحصائيات --- */
         #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
         .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -233,6 +232,7 @@
         .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
         .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
         
+        /* --- تنسيقات معرض الصور الجديد للإدارة --- */
         .invoice-img-card { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .invoice-img-card img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s; }
         .invoice-img-card img:hover { transform: scale(1.05); }
@@ -377,6 +377,9 @@
     </div>
 
     <footer style="text-align: center; padding: 20px; background: #f8f9fa; margin-top: auto;">
+        <!-- <button id="showDeductionBtn" style="padding: 10px 20px; background: var(--gold); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
+            جدول الاستقطاع
+        </button> -->
         <div style="margin-top: 10px;">
             <button id="adminLoginBtn" style="background: transparent; border: none; color: #aaa; text-decoration: underline; font-size: 14px; cursor: pointer;">
                  الاعدادات
@@ -393,7 +396,8 @@
         <button onclick="downloadStatsPDF()" class="pdf-btn">📥 تحميل التقرير (PDF)</button>
         
         <div id="pdfContentArea" style="background: #f4f7fe; padding: 15px;">
-            <div id="statsCardsGrid"></div>
+            <div id="statsCardsGrid">
+                </div>
         </div>
     </div>
 
@@ -440,19 +444,14 @@
 
     <div id="imageModal" style="display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); text-align: center;">
         <span id="closeModal" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer;">&times;</span>
-        <img src="" id="modalImg" style="max-width: 90%; margin-top: 60px; border: 2px solid white; border-radius: 10px;">
+        <img src="https://i.imgur.com/nYQiffV.png" id="modalImg" style="max-width: 90%; margin-top: 60px; border: 2px solid white; border-radius: 10px;">
     </div>
 
     <script>
-        // رابط بيانات الاستقطاعات (الموقع الرئيسي)
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxKm8-L-Gn8uslflwxoVdTk0zFWa4SnIqCw6-fHxFt-K8rFNAxd4QNONjbIwVbkXCki2w/exec";
-        
-        // رابط بيانات المخالفات (لجلب عدد المخالفات ودمجها)
-        const VIOLATIONS_URL = "https://script.google.com/macros/s/AKfycbzjoY4mXpRrwG1i1i0c2v6pifvW4j2GRFAtEhkMbQWf1c_WQzKnKLvwheVPpP8SIafyuw/exec";
-        
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyZ_RLBmN4WXnTCnrqetEEVdDuYYiHNmPFWmCh30lvdZ7Oe7n1AZ_5Ndr3W3xF871VzGg/exec";
         window.globalData = null;
-        window.violationsData = null; // متغير جديد لحفظ بيانات المخالفات
 
+        // دالة تحويل الصورة إلى نص لتتمكن جوجل من استلامها وحفظها
         function getBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -463,14 +462,21 @@
         }
 
         async function fetchGoogleData() {
+            // 1. عرض البيانات من ذاكرة الهاتف فوراً (بسرعة البرق)
             let cachedData = localStorage.getItem('googleDataCache');
             if (cachedData) {
                 window.globalData = JSON.parse(cachedData);
+                console.log("⚡ تم تحميل البيانات من ذاكرة الهاتف فوراً");
             }
+
+            // 2. جلب البيانات الجديدة من سيرفر جوجل في الخلفية بصمت
             try {
                 const response = await fetch(scriptURL);
                 window.globalData = await response.json();
+                
+                // حفظ البيانات الجديدة في الهاتف للمرات القادمة
                 localStorage.setItem('googleDataCache', JSON.stringify(window.globalData));
+                console.log("🔄 تم تحديث البيانات من جوجل بنجاح");
             } catch (error) {
                 console.error("خطأ في جلب البيانات:", error);
             }
@@ -495,6 +501,7 @@
                 document.getElementById('hiddenCardId1').value = cardId;
                 document.getElementById('hiddenCardId2').value = cardId;
                 document.getElementById('driverWelcome').innerText = "رقم البطاقة: " + cardId;
+                // إظهار نافذة التنبيه الإجباري بدلاً من الدخول مباشرة
                 document.getElementById('announcementModal').style.display = 'flex';
             } else {
                 alert("الرجاء إدخال رقم البطاقة");
@@ -512,8 +519,10 @@
             const btn = e.target.querySelector('button');
             loader.style.display = 'block';
             btn.disabled = true;
+
             const formData = new FormData(e.target);
             formData.append('action', 'addDeduction');
+
             try {
                 await fetch(scriptURL, { method: "POST", body: formData });
                 alert("تم الإرسال بنجاح! ✅");
@@ -534,15 +543,20 @@
             const btn = e.target.querySelector('button');
             loader.style.display = 'block';
             btn.disabled = true;
+
             const formData = new FormData(e.target);
             formData.append('action', 'addInvoice');
+
             try {
+                // التقاط الصورة وتحويلها (في حال قام المندوب بالتصوير)
                 let fileInput = document.getElementById('invoiceImage');
                 if (fileInput && fileInput.files.length > 0) {
                     let base64Image = await getBase64(fileInput.files[0]);
                     formData.append("imageFile", base64Image);
+                    // تسمية الصورة بشكل فريد
                     formData.append("imageName", "Invoice_" + (formData.get("card_id") || "Img") + "_" + Date.now());
                 }
+
                 await fetch(scriptURL, { method: "POST", body: formData });
                 alert("تم إرسال الفاتورة بنجاح! ✅");
                 e.target.reset();
@@ -563,12 +577,16 @@
                 alert("الرمز السري غير صحيح ❌"); 
                 return; 
             }
+            
             if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
+
             const myOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
+            
             if (myOrders.length === 0) { alert("لا توجد طلبات مسجلة لهذا المطعم"); return; }
 
             let totalOrdersCount = 0;
             let totalAmountSum = 0;
+
             let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th></tr></thead><tbody>`;
             
             myOrders.forEach(row => {
@@ -578,10 +596,13 @@
                 rawPriceStr = rawPriceStr.replace(/,/g, '.');
                 let price = parseFloat(rawPriceStr);
                 
-                if (rawPriceStr.includes('T') || isNaN(price)) { price = 0; }
+                if (rawPriceStr.includes('T') || isNaN(price)) {
+                    price = 0; 
+                }
                 
                 totalOrdersCount++;
                 totalAmountSum += price;
+
                 html += `<tr>
                     <td>${row[2]}</td>
                     <td dir="ltr">${dateStr}</td>
@@ -602,7 +623,8 @@
                     <span style="display:block; font-size:0.9rem; color:#666;">إجمالي المبالغ</span>
                     <strong style="font-size:1.4rem; color:#2ecc71;">${totalAmountSum.toFixed(3)} ر.ع</strong>
                 </div>
-            </div>`;
+            </div>
+            `;
             
             document.getElementById('dashTitle').innerText = "ملخص طلبات: " + restName;
             document.getElementById('resultsArea').innerHTML = summaryHtml + html;
@@ -614,37 +636,23 @@
             const modal = document.getElementById("imageModal");
             const adminPanel = document.getElementById("adminPanel");
 
+            document.getElementById("showDeductionBtn").onclick = function() {
+                modal.style.display = "block";
+            };
             document.getElementById("closeModal").onclick = function() {
                 modal.style.display = "none";
             };
 
-            // تعديل هائل: جلب المخالفات مباشرة عند فتح لوحة الإدارة
-            document.getElementById("adminLoginBtn").onclick = async function() {
+            document.getElementById("adminLoginBtn").onclick = function() {
                 let pwd = prompt("كلمة مرور الإدارة:");
                 if (pwd && btoa(pwd) === "OTA5MA==") {
                     adminPanel.style.display = "block";
-                    
-                    // إظهار رسالة تحميل لحين دمج البيانات
-                    document.getElementById("adminCardsGrid").innerHTML = "<div style='text-align:center; padding:50px;'><div class='loader' style='display:block; margin:auto;'></div><p style='margin-top:15px; font-weight:bold;'>جاري جلب ودمج البيانات والمخالفات...</p></div>";
-                    
-                    // جلب بيانات المخالفات من السيرفر الثاني
-                    if(!window.violationsData) {
-                        try {
-                            let vRes = await fetch(VIOLATIONS_URL + "?action=getStats");
-                            window.violationsData = await vRes.json();
-                        } catch(e) {
-                            console.error("لم نتمكن من جلب بيانات المخالفات", e);
-                            window.violationsData = { captains: {} };
-                        }
-                    }
-                    
                     generateAdminReport();
-                    generateRestaurantsReport();
+                    generateRestaurantsReport(); // تحميل إحصائيات المطاعم للإدارة
                 } else if (pwd !== null) {
                     alert("كلمة المرور غير صحيحة ❌");
                 }
             };
-            
             document.getElementById("closeAdminPanel").onclick = function() {
                 adminPanel.style.display = "none";
             };
@@ -655,6 +663,7 @@
             };
         });
 
+        // دوال التنقل في تبويبات الإدارة
         function switchAdminTab(tab) {
             document.getElementById('tabDrivers').classList.remove('active');
             document.getElementById('tabRests').classList.remove('active');
@@ -692,19 +701,34 @@
             let globalTotalNet = 0;
             let globalTotalDeductions = 0; 
             
+            // الدالة الأقوى لتنظيف الأرقام (تدعم الأرقام العربية الهندية)
             const safeParse = (val) => {
                 if (val === null || val === undefined || val === "") return 0;
                 if (typeof val === 'number') return val;
+
                 let s = val.toString().trim();
-                if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) { return 0; }
+                
+                // تجاهل التواريخ
+                if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
+                    return 0; 
+                }
+
+                // 1. ترجمة الأرقام العربية (١٢٣) إلى إنجليزية (123) ليفهمها الموقع
                 s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+                
+                // 2. تحويل الفواصل بأنواعها إلى نقطة
                 let cleanStr = s.replace(/[,،]/g, '.');
+                
+                // 3. استخراج جميع الأرقام من النص وتجاهل أي حروف أو مسافات
                 let matches = cleanStr.match(/-?\d*\.?\d+/g); 
+                
                 let sum = 0;
                 if (matches) {
                     matches.forEach(m => {
                         let num = parseFloat(m);
-                        if (!isNaN(num) && num < 1000) { sum += num; }
+                        if (!isNaN(num) && num < 1000) { 
+                            sum += num;
+                        }
                     });
                 }
                 return sum;
@@ -712,15 +736,21 @@
 
             for (let i = 1; i < ded.length; i++) {
                 let row = ded[i];
+                
+                // تخطي صف "الإجمالي" الذي يصنعه جوجل شيت في أسفل الملف إن وجد
                 if (row[0] && row[0].toString().includes("الإجمالي")) continue;
 
                 let name = row[1] ? row[1].toString().trim() : "";
+                
+                // تجميع المبالغ للمناديب الذين نسوا كتابة أسمائهم بدلاً من حذفها
                 if (!name) {
                     if (row[4] || row[5]) name = "طلبات غير مسجلة (بدون اسم)";
                     else continue; 
                 }
 
                 let ordersCount = parseInt(row[2]) || 0;
+                
+                // جلب مبلغ الاستقطاع (نقوم بسحبه من العمود المخفي H إذا كان موجوداً لضمان الدقة، وإلا نجلبه من F)
                 let deductionAmount = (row[7] !== undefined && row[7] !== "") ? parseFloat(row[7]) : safeParse(row[5]);
                 if (isNaN(deductionAmount)) deductionAmount = safeParse(row[5]);
 
@@ -747,6 +777,7 @@
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
+                
                 let total = Math.round(d.total * 1000) / 1000;
                 let deds = Math.round(d.deds * 1000) / 1000;
                 let net = Math.round((total - deds) * 1000) / 1000;
@@ -754,26 +785,13 @@
                 globalTotalNet += net;
                 globalTotalDeductions += deds; 
 
-                // --- دمج المخالفات الخاصة بهذا المندوب من السيرفر الثاني ---
-                let violationsCount = 0;
-                if(window.violationsData && window.violationsData.captains && window.violationsData.captains[name]) {
-                    violationsCount = window.violationsData.captains[name].count;
-                }
-                
-                // شارة حمراء تظهر بجانب الاسم إذا كان لديه مخالفات
-                let violationBadge = violationsCount > 0 ? `<span style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: auto; box-shadow: 0 2px 5px rgba(231,76,60,0.3);">🚨 لديه ${violationsCount} مخالفة</span>` : '';
-
                 html += `
                 <div class="driver-card" data-name="${name}">
-                    <div class="driver-name">
-                        👤 ${name}
-                        ${violationBadge}
-                    </div>
+                    <div class="driver-name">👤 ${name}</div>
                     <div class="driver-stats">
                         <div class="stat-box"><span>الطلبات</span><strong>${d.count}</strong></div>
                         <div class="stat-box"><span>المحصل</span><strong class="text-success">${total.toFixed(3)}</strong></div>
                         <div class="stat-box"><span>الاستقطاع</span><strong class="text-danger">${deds.toFixed(3)}</strong></div>
-                        <div class="stat-box" style="background: ${violationsCount > 0 ? '#fdecea' : '#f8f9fa'};"><span>المخالفات</span><strong style="color: ${violationsCount > 0 ? '#e74c3c' : '#333'};">${violationsCount}</strong></div>
                     </div>
                     <div class="driver-net">
                         <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
@@ -792,6 +810,7 @@
             gridContainer.innerHTML = html;
         }
 
+        // دالة عرض معرض الصور الخاصة بكل مندوب
         function viewDriverImages(driverName) {
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             if (inv.length <= 1) return;
@@ -801,6 +820,7 @@
             const grid = document.getElementById('imagesGrid');
             grid.innerHTML = ""; 
 
+            // البحث في شيت الفواتير (بافتراض أن رابط الصورة يخزن في العمود رقم 10 أي index 9)
             const driverInvoices = inv.filter(row => 
                 row[2] && row[2].toString().trim() === driverName && row[9] && row[9].toString().trim() !== ""
             );
@@ -829,6 +849,7 @@
             });
         }
 
+        // توليد إحصائيات المطاعم للإدارة
         function generateRestaurantsReport() {
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             let rests = {};
@@ -874,6 +895,7 @@
             });
         }
 
+        // --- نظام الأرشفة والتصفير ---
         async function archiveCycle() {
             let pass = prompt("تحذير: هذه العملية ستقوم بنقل وتصفير جميع بيانات المناديب والمطاعم لتبدأ دورة جديدة.\nأدخل كلمة المرور للتأكيد:");
            if(btoa(pass) !== "OTA5MA==") {
@@ -900,6 +922,7 @@
             }
         }
 
+        // --- دوال لوحة الإحصائيات والمستويات ---
         function openStatsPanel() {
             document.getElementById("adminStatsPanel").style.display = "block";
             generateStatsReport();
@@ -937,11 +960,11 @@
                 let percentage = totalGlobalOrders > 0 ? ((d.orders / totalGlobalOrders) * 100).toFixed(1) : 0;
                 
                 let level = "ضعيف 📉";
-                let color = "#e74c3c"; 
+                let color = "#e74c3c"; // أحمر
                 
-                if (d.orders >= 100) { level = "متميز 🌟"; color = "#9b59b6"; } 
-                else if (d.orders >= 50) { level = "جيد جداً 🟢"; color = "#2ecc71"; } 
-                else if (d.orders >= 20) { level = "متوسط 🟡"; color = "#f39c12"; } 
+                if (d.orders >= 100) { level = "متميز 🌟"; color = "#9b59b6"; } // بنفسجي
+                else if (d.orders >= 50) { level = "جيد جداً 🟢"; color = "#2ecc71"; } // أخضر
+                else if (d.orders >= 20) { level = "متوسط 🟡"; color = "#f39c12"; } // برتقالي مائل للذهبي
 
                 pageBuffer += `
                 <div class="stat-card">
@@ -958,6 +981,7 @@
                     </div>
                 </div>`;
 
+                // بعد كل 6 مناديب يتم إغلاق حاوية الشبكة ووضع فاصل صفحة (Page Break) للـ PDF
                 if ((index + 1) % 6 === 0 || index === sortedDrivers.length - 1) {
                     html += `
                     <div style="page-break-after: always; margin-bottom: 20px;">
