@@ -280,6 +280,7 @@
         <h2 id="driverWelcome">أهلاً بك</h2>
         <button class="main-btn" style="margin-bottom:10px" onclick="showSection('deductionSec')">تسجيل استقطاعات</button>
         <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
+        <button class="main-btn" style="margin-top:10px; background:#e74c3c; color:white; border-color:#c0392b;" onclick="showSection('apologySec')">🚫 اعتذار عن مناوبة</button>
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
     </div>
 
@@ -350,6 +351,28 @@
             
             <button type="submit" class="submit-btn">إرسال الفاتورة</button>
             <div id="loader2" class="loader"></div>
+        </form>
+        <button class="back-btn" onclick="showSection('driverOptionsSec')">رجوع</button>
+    </div>
+
+    <div id="apologySec" class="page-section">
+        <h2>طلب اعتذار عن مناوبة</h2>
+        <p style="color: #e74c3c; font-size: 0.9rem; font-weight: bold;">⚠️ تنبيه: الحد الأقصى للاعتذارات هو مرتين في الأسبوع.</p>
+        <form id="apologyForm" onsubmit="submitApology(event)">
+            <div class="input-group">
+                <label>اسم المندوب</label>
+                <input type="text" name="driver_name" id="apologyDriverName" placeholder="اكتب اسمك الثلاثي" required>
+            </div>
+            <div class="input-group">
+                <label>تاريخ المناوبة</label>
+                <input type="date" name="shift_date" required>
+            </div>
+            <div class="input-group">
+                <label>سبب الاعتذار</label>
+                <textarea name="reason" rows="3" required placeholder="يرجى ذكر السبب بوضوح"></textarea>
+            </div>
+            <button type="submit" class="submit-btn" style="background:#e74c3c;">إرسال الطلب</button>
+            <div id="loader4" class="loader"></div>
         </form>
         <button class="back-btn" onclick="showSection('driverOptionsSec')">رجوع</button>
     </div>
@@ -448,7 +471,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxMbHonqbBVTkFd1gHJRmVgVgZr5t8lIAeP8XYc6RT1CWLvuNk0TJ8P9zjMeV2jAY9S5Q/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwmmSAhEjpVCcqLd3CmkFn0Ap28OIpqsP68u-OsJ71SZZWPhtOOf1m5iJc8E1rdXFJU3w/exec";
         window.globalData = null;
 
         // دالة تحويل الصورة إلى نص لتتمكن جوجل من استلامها وحفظها
@@ -564,6 +587,38 @@
                 showSection('driverOptionsSec');
             } catch (error) {
                 alert("حدث خطأ ❌");
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        async function submitApology(e) {
+            e.preventDefault();
+            const loader = document.getElementById('loader4');
+            const btn = e.target.querySelector('button');
+            loader.style.display = 'block';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            formData.append('action', 'addApology');
+            formData.append('card_id', document.getElementById('hiddenCardId1').value);
+
+            try {
+                const response = await fetch(scriptURL, { method: "POST", body: formData });
+                const result = await response.text();
+
+                if (result === "LimitReached") {
+                    alert("عذراً، لقد استنفدت الحد الأقصى (مرتين) للاعتذارات هذا الأسبوع.");
+                } else if (result === "Success") {
+                    alert("✅ تم تسجيل اعتذارك وإبلاغ الإدارة.");
+                    e.target.reset();
+                    showSection('driverOptionsSec');
+                } else {
+                    alert("حدث خطأ غير متوقع: " + result);
+                }
+            } catch (error) {
+                alert("حدث خطأ في الاتصال ❌");
             } finally {
                 loader.style.display = 'none';
                 btn.disabled = false;
