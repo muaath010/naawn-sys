@@ -930,13 +930,121 @@
                 html += `
                 <div class="driver-card" style="border-top-color:#e67e22;">
                     <div class="driver-name">🍔 ${name}</div>
-                    <div class="driver-net" style="background:#fdf2e9;">
+                    <div class="driver-net" style="background:#fdf2e9; margin-bottom: 15px;">
                         <span>إجمالي الطلبات: <strong>${r.count}</strong></span>
                         <span style="color:#e67e22;">الإجمالي: <strong>${r.total.toFixed(3)} ر.ع</strong></span>
                     </div>
+                    <button class="main-btn" style="background:#2c3e50; border-color:#1a252f; color:white; font-size:14px; padding:10px; width:100%; border-radius:10px;" onclick="downloadRestaurantInvoice('${name}')">
+                        📄 تصدير فاتورة المطعم (PDF)
+                    </button>
                 </div>`;
             }
             document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد فواتير مطاعم حالياً.</p>";
+        }
+
+        // ميزة تصدير فاتورة مخصصة للمطعم بصيغة PDF (مع مراعاة انقسام الصفحات)
+        function downloadRestaurantInvoice(restName) {
+            if (!window.globalData || !window.globalData.invoices) {
+                alert("البيانات غير مكتملة، يرجى الانتظار قليلاً والمحاولة مجدداً.");
+                return;
+            }
+
+            // فلترة الطلبات لتشمل فقط طلبات هذا المطعم
+            const restOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
+            
+            if (restOrders.length === 0) {
+                alert("لا توجد طلبات مسجلة لهذا المطعم.");
+                return;
+            }
+
+            // تصميم الفاتورة بشكل احترافي وأنيق
+            let pdfHtml = `
+                <div style="direction: rtl; font-family: 'Tajawal', sans-serif; padding: 20px; border: 5px solid #2c3e50; border-radius: 10px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="https://i.imgur.com/nYQiffV.png" style="width: 90px; border-radius: 50%; border: 2px solid #D4AF37;">
+                        <h1 style="color: #D4AF37; margin: 10px 0 5px 0;">فريق نعاون لخدمات التوصيل</h1>
+                        <p style="margin: 0; font-weight: bold; font-size: 1.2rem; color: #2c3e50;">فاتورة مطعم تفصيلية</p>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                        <div>
+                            <p style="margin: 5px 0; font-size: 1.1rem;"><b>اسم الشريك (المطعم):</b> <span style="color:#e67e22;">${restName}</span></p>
+                        </div>
+                        <div style="text-align: left;">
+                            <p style="margin: 5px 0;"><b>تاريخ الإصدار:</b> ${new Date().toLocaleDateString('ar-OM')}</p>
+                            <p style="margin: 5px 0;"><b>العملة:</b> ريال عماني (ر.ع)</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: center; font-size: 13px;">
+                        <thead>
+                            <tr style="background-color: #2c3e50; color: white;">
+                                <th style="padding: 12px; border: 1px solid #ddd;">م</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">التاريخ</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">المندوب</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">تفاصيل الطلب</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">المكان</th>
+                                <th style="padding: 12px; border: 1px solid #ddd;">المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            let totalAmount = 0;
+
+            restOrders.forEach((row, index) => {
+                let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
+                let driver = row[2] || "---";
+                let loc = row[3] || "---";
+                let details = row[5] || "---";
+                
+                let rawPriceStr = (row[8] !== undefined && row[8] !== "") ? row[8].toString() : (row[6] ? row[6].toString() : "0");
+                rawPriceStr = rawPriceStr.replace(/,/g, '.');
+                let price = parseFloat(rawPriceStr);
+                if (rawPriceStr.includes('T') || isNaN(price)) price = 0;
+
+                pdfHtml += `
+                    <tr style="page-break-inside: avoid; ${index % 2 === 0 ? 'background-color: #f9f9f9;' : ''}">
+                        <td style="padding: 10px; border: 1px solid #ddd;">${index + 1}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;" dir="ltr">${dateStr}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${driver}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${details}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${loc}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #2ecc71;">${price.toFixed(3)}</td>
+                    </tr>
+                `;
+                totalAmount += price;
+            });
+
+            pdfHtml += `
+                        </tbody>
+                    </table>
+
+                    <div style="page-break-inside: avoid; background: #fdfaf0; padding: 20px; border-radius: 12px; text-align: left; direction: rtl; border: 1px solid #F4C430;">
+                        <p style="font-size: 1.1rem; margin: 0 0 10px 0;"><b>إجمالي عدد الطلبات:</b> <span style="color:#2c3e50; font-weight:bold;">${restOrders.length} طلبات</span></p>
+                        <div style="border-top: 2px dashed #D4AF37; margin: 10px 0;"></div>
+                        <h2 style="color: #27ae60; margin: 10px 0 0 0; font-size: 1.5rem;">
+                            الإجمالي المستحق للمطعم: ${totalAmount.toFixed(3)} ر.ع
+                        </h2>
+                    </div>
+
+                    <div style="page-break-inside: avoid; margin-top: 40px; text-align: center; color: #7f8c8d; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <p style="margin: 0;">صدرت هذه الفاتورة آلياً من النظام الإلكتروني لفريق نعاون</p>
+                        <p style="margin: 5px 0 0 0;">للتواصل والاستفسار يرجى مراجعة إدارة الفريق</p>
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin: [15, 10, 15, 10], 
+                filename: `فاتورة_نعاون_${restName}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+            };
+            
+            html2pdf().from(pdfHtml).set(opt).save();
         }
 
         function filterDrivers() {
@@ -1109,7 +1217,7 @@
                 let revenue = parseFloat(row[8]) || 0;
                 let ded = parseFloat(row[7]) || 0;
                 pdfHtml += `
-                    <tr>
+                    <tr style="page-break-inside: avoid;">
                         <td style="padding: 8px; border: 1px solid #ddd;">${row[3]}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${row[2]}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${revenue.toFixed(3)}</td>
@@ -1124,7 +1232,7 @@
             pdfHtml += `
                         </tbody>
                     </table>
-                    <div style="background: #fdfaf0; padding: 15px; border-radius: 10px; text-align: right;">
+                    <div style="page-break-inside: avoid; background: #fdfaf0; padding: 15px; border-radius: 10px; text-align: right;">
                         <p><b>إجمالي الطلبات:</b> ${totalOrders}</p>
                         <p><b>إجمالي المحصل:</b> ${totalRevenue.toFixed(3)} ر.ع</p>
                         <p><b>إجمالي الاستقطاع:</b> ${totalDeds.toFixed(3)} ر.ع</p>
@@ -1132,16 +1240,17 @@
                             صافي المستحق للمندوب: ${(totalRevenue - totalDeds).toFixed(3)} ر.ع
                         </h2>
                     </div>
-                    <p style="text-align: center; margin-top: 30px; color: #777; font-size: 12px;">تُسلم هذه النسخة كوثيقة رسمية من فريق نعاون</p>
+                    <p style="page-break-inside: avoid; text-align: center; margin-top: 30px; color: #777; font-size: 12px;">تُسلم هذه النسخة كوثيقة رسمية من فريق نعاون</p>
                 </div>
             `;
 
             const opt = {
-                margin: 10,
+                margin: [15, 10, 15, 10],
                 filename: `كشف_حساب_${driverName}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
             html2pdf().from(pdfHtml).set(opt).save();
         }
