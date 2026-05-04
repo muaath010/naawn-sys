@@ -393,6 +393,20 @@
         </div>
         <div id="dashboardBlock" style="display: none;">
             <h2 id="dashTitle">ملخص الطلبات</h2>
+            
+            <!-- أداة تصفية التاريخ الجديدة للمطاعم -->
+            <div style="background: #fdfaf0; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--gold); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;">
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; color: #555; text-align: right; display: block; margin-bottom: 5px; font-weight:bold;">من تاريخ:</label>
+                    <input type="date" id="filterStartDate" style="padding: 8px; font-size: 14px; width: 100%; border:1px solid #ccc;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; color: #555; text-align: right; display: block; margin-bottom: 5px; font-weight:bold;">إلى تاريخ:</label>
+                    <input type="date" id="filterEndDate" style="padding: 8px; font-size: 14px; width: 100%; border:1px solid #ccc;">
+                </div>
+                <button onclick="applyRestaurantFilter()" class="submit-btn" style="background: var(--gold); padding: 10px; width: auto; min-width: 90px; margin-top: 25px; font-size: 14px; flex: 0.5;">🔍 تصفية</button>
+            </div>
+
             <div class="table-container" id="resultsArea"></div>
             <button onclick="location.reload()" class="submit-btn" style="background: #666; margin-top: 15px;">تسجيل خروج</button>
         </div>
@@ -635,16 +649,51 @@
             
             if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
 
+            // حفظ اسم المطعم كمتغير عام لاستخدامه في التصفية
+            window.currentLoggedRestaurant = restName;
+            
+            // عرض البيانات للمرة الأولى (بدون فلاتر تاريخ)
+            renderRestaurantData(restName, "", "");
+        }
+
+        // دالة جديدة لعرض البيانات مع إمكانية التصفية بالتواريخ
+        function renderRestaurantData(restName, startDateStr, endDateStr) {
             const myOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
             
-            if (myOrders.length === 0) { alert("لا توجد طلبات مسجلة لهذا المطعم"); return; }
+            if (myOrders.length === 0) { 
+                document.getElementById('resultsArea').innerHTML = "<p>لا توجد طلبات مسجلة لهذا المطعم</p>"; 
+                showDashboard();
+                return; 
+            }
+
+            let filteredOrders = myOrders;
+
+            // فلترة الطلبات إذا قام المطعم بتحديد تواريخ
+            if (startDateStr || endDateStr) {
+                let start = startDateStr ? new Date(startDateStr) : new Date("2000-01-01");
+                let end = endDateStr ? new Date(endDateStr) : new Date("2100-01-01");
+                start.setHours(0,0,0,0);
+                end.setHours(23,59,59,999);
+
+                filteredOrders = myOrders.filter(row => {
+                    if (!row[4]) return false;
+                    let rowDate = new Date(row[4].toString().split('T')[0]);
+                    return rowDate >= start && rowDate <= end;
+                });
+            }
+
+            if (filteredOrders.length === 0) {
+                document.getElementById('resultsArea').innerHTML = "<p style='color:#e74c3c; font-weight:bold; margin: 20px 0;'>لا توجد طلبات في هذه الفترة المحددة.</p>";
+                showDashboard();
+                return;
+            }
 
             let totalOrdersCount = 0;
             let totalAmountSum = 0;
 
             let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th></tr></thead><tbody>`;
             
-            myOrders.forEach(row => {
+            filteredOrders.forEach(row => {
                 let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
                 let orderDetails = row[5] ? row[5].toString() : "---";
                 let rawPriceStr = (row[8] !== undefined && row[8] !== "") ? row[8].toString() : (row[6] ? row[6].toString() : "0");
@@ -671,20 +720,35 @@
             let summaryHtml = `
             <div style="display:flex; justify-content:space-around; background:#f4f7fe; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #ddd;">
                 <div style="text-align:center;">
-                    <span style="display:block; font-size:0.9rem; color:#666;">إجمالي الطلبات</span>
+                    <span style="display:block; font-size:0.9rem; color:#666;">الطلبات بالفترة المحددة</span>
                     <strong style="font-size:1.4rem; color:#333;">${totalOrdersCount}</strong>
                 </div>
                 <div style="text-align:center;">
-                    <span style="display:block; font-size:0.9rem; color:#666;">إجمالي المبالغ</span>
+                    <span style="display:block; font-size:0.9rem; color:#666;">الإجمالي المستحق</span>
                     <strong style="font-size:1.4rem; color:#2ecc71;">${totalAmountSum.toFixed(3)} ر.ع</strong>
                 </div>
             </div>
             `;
             
-            document.getElementById('dashTitle').innerText = "ملخص طلبات: " + restName;
+            document.getElementById('dashTitle').innerText = "ملخص حساب: " + restName;
             document.getElementById('resultsArea').innerHTML = summaryHtml + html;
+            showDashboard();
+        }
+
+        function showDashboard() {
             document.getElementById('loginBlock').style.display = 'none';
             document.getElementById('dashboardBlock').style.display = 'block';
+        }
+
+        // الدالة التي يتم استدعاؤها عند الضغط على زر "تصفية"
+        function applyRestaurantFilter() {
+            let start = document.getElementById('filterStartDate').value;
+            let end = document.getElementById('filterEndDate').value;
+            let restName = window.currentLoggedRestaurant;
+            
+            if(restName) {
+                renderRestaurantData(restName, start, end);
+            }
         }
 
         // --- الجزء الذي كان محذوفاً (الأحداث والأزرار) وتم استرجاعه ---
