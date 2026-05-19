@@ -19,7 +19,7 @@
             --card-bg: #ffffff;
             --text: #333333;
             --text-light: #666666;
-            --dark-gray: #333333; /* لون الشعار المعتمد */
+            --dark-gray: #333333;
         }
 
         body {
@@ -140,11 +140,9 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* --- تنسيقات التنبيه الإداري (Pop-up) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .announcement-box { background: white; border-radius: 20px; padding: 30px; text-align: right; max-width: 400px; width: 100%; border-top: 6px solid #e74c3c; animation: slideUp 0.4s ease; }
 
-        /* --- تنسيقات لوحة الإدارة الاحترافية والتبويبات --- */
         #adminPanel {
             background-color: #f4f7fe !important;
             font-family: 'Tajawal', sans-serif;
@@ -221,7 +219,6 @@
             background: #fdfaf0; padding: 12px; border-radius: 10px; font-weight: bold;
         }
 
-        /* --- تنسيقات صفحة الإحصائيات --- */
         #adminStatsPanel { background-color: #f4f7fe; font-family: 'Tajawal', sans-serif; }
         .stat-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-right: 5px solid var(--gold); text-align: right; }
         .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -233,7 +230,6 @@
         .pdf-btn { background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: block; margin: 15px auto; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); }
         .pdf-btn:hover { background: #c0392b; transform: translateY(-2px); }
         
-        /* --- تنسيقات معرض الصور الجديد للإدارة --- */
         .invoice-img-card { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .invoice-img-card img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; transition: transform 0.3s; }
         .invoice-img-card img:hover { transform: scale(1.05); }
@@ -287,14 +283,14 @@
         <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
         
         <button class="main-btn" style="margin-top:10px; background:#e67e22; border-color:#d35400; color:white;" onclick="showMyRecords()">📂 سجلاتي</button>
-        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 تسجيل ملاحظة</button>
+        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 رفع ملاحظة أو شكوى</button>
         <button class="main-btn" style="margin-top:10px; background:#e74c3c; color:white; border-color:#c0392b;" onclick="showSection('apologySec')">🚫 اعتذار عن مناوبة</button>
         
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
     </div>
 
     <div id="notesSec" class="page-section">
-        <h2>تسجيل ملاحظة</h2>
+        <h2>رفع ملاحظة أو شكوى للإدارة</h2>
         <form id="notesForm" onsubmit="submitNote(event)">
             <div class="input-group">
                 <label>اسم المندوب</label>
@@ -496,8 +492,8 @@
                 </button>
                 <button onclick="archiveCycle()" class="archive-btn">🔄 تصفير الدورة المالية وأرشفتها</button>
                 <button onclick="exportComprehensiveData()" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(39,174,96,0.2);">
-    Excel 📥 تصدير البيانات الشامل
-</button>
+                    Excel 📥 تصدير البيانات الشامل
+                </button>
             </div>
 
             <div id="adminSummary" class="admin-summary"></div>
@@ -516,7 +512,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycby5Ndocnz3uqiFTpXTbs5KOCthwSWUvXtI3JkQM159NWfJmGPKRQQOaeR7qNj4usxcHRw/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbx_v2iVddHvXLQFuUftCL82FUMO84JfhBvOYBi_6UF5LKqtdNoSfttOGdnOTKqCswmq5w/exec";
         window.globalData = null;
 
         function getBase64(file) {
@@ -556,7 +552,6 @@
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
-        // --- نظام تسجيل الدخول الجديد بكلمات المرور ---
         function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
             const pass = document.getElementById('driverPassInput').value.trim();
@@ -575,7 +570,6 @@
             let isValid = false;
             let driverName = "";
 
-            // البحث في شيت كلمات المرور
             for (let i = 1; i < passwordsData.length; i++) {
                 let sheetCard = passwordsData[i][0] ? passwordsData[i][0].toString().trim() : "";
                 let sheetPass = passwordsData[i][1] ? passwordsData[i][1].toString().trim() : "";
@@ -603,7 +597,6 @@
             showSection('driverOptionsSec');
         }
 
-        // --- نظام إرسال الملاحظات الجديد ---
         async function submitNote(e) {
             e.preventDefault();
             const loader = document.getElementById('loaderNotes');
@@ -628,7 +621,6 @@
             }
         }
 
-        // --- نظام عرض سجلات المندوب الجديد ---
         function showMyRecords() {
             const cardId = document.getElementById('hiddenCardId1').value;
             if (!window.globalData) {
@@ -885,9 +877,12 @@
                 modal.style.display = "none";
             };
 
+            // --- التحديث الجديد: فحص كلمة مرور الإدارة الديناميكية القادمة من جوجل شيت ---
             document.getElementById("adminLoginBtn").onclick = function() {
                 let pwd = prompt("كلمة مرور الإدارة:");
-                if (pwd === "12345") {
+                let correctPass = (window.globalData && window.globalData.adminPassword) ? window.globalData.adminPassword.toString().trim() : "12345";
+                
+                if (pwd === correctPass) {
                     adminPanel.style.display = "block";
                     generateAdminReport();
                     generateRestaurantsReport(); 
@@ -921,7 +916,7 @@
             }
         }
 
-      function generateAdminReport() {
+        function generateAdminReport() {
             const gridContainer = document.getElementById("adminCardsGrid");
             const summaryContainer = document.getElementById("adminSummary");
             
@@ -1233,7 +1228,9 @@
 
         async function archiveCycle() {
             let pass = prompt("تحذير: هذه العملية ستقوم بنقل وتصفير جميع بيانات المناديب والمطاعم لتبدأ دورة جديدة.\nأدخل كلمة المرور للتأكيد:");
-           if(pass !== "12345") {
+            let correctPass = (window.globalData && window.globalData.adminPassword) ? window.globalData.adminPassword.toString().trim() : "12345";
+            
+            if(pass !== correctPass) {
                 alert("كلمة المرور خاطئة ❌");
                 return;
             }
