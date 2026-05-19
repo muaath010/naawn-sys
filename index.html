@@ -19,6 +19,7 @@
             --card-bg: #ffffff;
             --text: #333333;
             --text-light: #666666;
+            --dark-gray: #333333; /* لون الشعار المعتمد */
         }
 
         body {
@@ -49,7 +50,7 @@
         .logo-container img {
             width: 100%; height: 100%;
             border-radius: 50%;
-            border: 3px solid var(--gold);
+            border: 3px solid var(--dark-gray);
             object-fit: cover;
             position: relative; z-index: 2;
         }
@@ -57,7 +58,7 @@
         .logo-container::after {
             content: "";
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%; background: var(--gold);
+            border-radius: 50%; background: var(--dark-gray);
             opacity: 0.5; animation: pulse 2s infinite; z-index: 1;
         }
 
@@ -272,6 +273,10 @@
             <label>رقم بطاقة المندوب</label>
             <input type="text" id="driverCardInput" placeholder="أدخل رقم بطاقتك">
         </div>
+        <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="driverPassInput" placeholder="أدخل كلمة المرور الخاصة بك">
+        </div>
         <button onclick="checkDriverLogin()" class="submit-btn">متابعة</button>
         <button class="back-btn" onclick="goBack()">عودة</button>
     </div>
@@ -280,8 +285,35 @@
         <h2 id="driverWelcome">أهلاً بك</h2>
         <button class="main-btn" style="margin-bottom:10px" onclick="showSection('deductionSec')">تسجيل استقطاعات</button>
         <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
+        
+        <button class="main-btn" style="margin-top:10px; background:#e67e22; border-color:#d35400; color:white;" onclick="showMyRecords()">📂 سجلاتي</button>
+        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 رفع ملاحظة أو شكوى</button>
         <button class="main-btn" style="margin-top:10px; background:#e74c3c; color:white; border-color:#c0392b;" onclick="showSection('apologySec')">🚫 اعتذار عن مناوبة</button>
+        
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
+    </div>
+
+    <div id="notesSec" class="page-section">
+        <h2>رفع ملاحظة أو شكوى للإدارة</h2>
+        <form id="notesForm" onsubmit="submitNote(event)">
+            <div class="input-group">
+                <label>اسم المندوب</label>
+                <input type="text" name="driver_name" placeholder="اكتب اسمك الثلاثي" required>
+            </div>
+            <div class="input-group">
+                <label>محتوى الملاحظة</label>
+                <textarea name="note_text" rows="4" required placeholder="اكتب ملاحظتك أو شكواك هنا بوضوح..."></textarea>
+            </div>
+            <button type="submit" class="submit-btn" style="background:#34495e;">إرسال للإدارة</button>
+            <div id="loaderNotes" class="loader"></div>
+        </form>
+        <button class="back-btn" onclick="showSection('driverOptionsSec')">رجوع</button>
+    </div>
+
+    <div id="myRecordsSec" class="page-section" style="max-width: 600px;">
+        <h2>سجلاتي السابقة</h2>
+        <div id="myRecordsContent"></div>
+        <button class="back-btn" style="margin-top:20px;" onclick="showSection('driverOptionsSec')">رجوع</button>
     </div>
 
     <div id="deductionSec" class="page-section">
@@ -394,7 +426,6 @@
         <div id="dashboardBlock" style="display: none;">
             <h2 id="dashTitle">ملخص الطلبات</h2>
             
-            <!-- أداة تصفية التاريخ الجديدة للمطاعم -->
             <div style="background: #fdfaf0; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--gold); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;">
                 <div style="flex: 1; min-width: 120px;">
                     <label style="font-size: 13px; color: #555; text-align: right; display: block; margin-bottom: 5px; font-weight:bold;">من تاريخ:</label>
@@ -485,10 +516,9 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbw3ABTZoDbcXgRWqQt5FFTZdnTrg4kh_kBUmwOuh7CLGQRpZ4mnr9_cX5N14Mjuxc4K-Q/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycby5Ndocnz3uqiFTpXTbs5KOCthwSWUvXtI3JkQM159NWfJmGPKRQQOaeR7qNj4usxcHRw/exec";
         window.globalData = null;
 
-        // دالة تحويل الصورة إلى نص لتتمكن جوجل من استلامها وحفظها
         function getBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -499,21 +529,15 @@
         }
 
         async function fetchGoogleData() {
-            // 1. عرض البيانات من ذاكرة الهاتف فوراً (بسرعة البرق)
             let cachedData = localStorage.getItem('googleDataCache');
             if (cachedData) {
                 window.globalData = JSON.parse(cachedData);
-                console.log("⚡ تم تحميل البيانات من ذاكرة الهاتف فوراً");
             }
 
-            // 2. جلب البيانات الجديدة من سيرفر جوجل في الخلفية بصمت
             try {
                 const response = await fetch(scriptURL);
                 window.globalData = await response.json();
-                
-                // حفظ البيانات الجديدة في الهاتف للمرات القادمة
                 localStorage.setItem('googleDataCache', JSON.stringify(window.globalData));
-                console.log("🔄 تم تحديث البيانات من جوجل بنجاح");
             } catch (error) {
                 console.error("خطأ في جلب البيانات:", error);
             }
@@ -532,22 +556,124 @@
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
+        // --- نظام تسجيل الدخول الجديد بكلمات المرور ---
         function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
-            if (cardId !== "") {
+            const pass = document.getElementById('driverPassInput').value.trim();
+            
+            if (cardId === "" || pass === "") {
+                alert("الرجاء إدخال رقم البطاقة وكلمة المرور");
+                return;
+            }
+
+            if (!window.globalData || !window.globalData.passwords) {
+                alert("جاري تحميل البيانات.. يرجى الانتظار ثواني ثم المحاولة مرة أخرى.");
+                return;
+            }
+
+            const passwordsData = window.globalData.passwords;
+            let isValid = false;
+            let driverName = "";
+
+            // البحث في شيت كلمات المرور
+            for (let i = 1; i < passwordsData.length; i++) {
+                let sheetCard = passwordsData[i][0] ? passwordsData[i][0].toString().trim() : "";
+                let sheetPass = passwordsData[i][1] ? passwordsData[i][1].toString().trim() : "";
+                
+                if (sheetCard === cardId && sheetPass === pass) {
+                    isValid = true;
+                    driverName = passwordsData[i][2] ? passwordsData[i][2].toString().trim() : ("المندوب " + cardId);
+                    break;
+                }
+            }
+
+            if (isValid) {
                 document.getElementById('hiddenCardId1').value = cardId;
                 document.getElementById('hiddenCardId2').value = cardId;
-                document.getElementById('driverWelcome').innerText = "رقم البطاقة: " + cardId;
-                // إظهار نافذة التنبيه الإجباري بدلاً من الدخول مباشرة
+                document.getElementById('apologyDriverName').value = driverName; 
+                document.getElementById('driverWelcome').innerText = "أهلاً بك: " + driverName;
                 document.getElementById('announcementModal').style.display = 'flex';
             } else {
-                alert("الرجاء إدخال رقم البطاقة");
+                alert("رقم البطاقة أو كلمة المرور غير صحيحة ❌");
             }
         }
 
         function acceptAnnouncement() {
             document.getElementById('announcementModal').style.display = 'none';
             showSection('driverOptionsSec');
+        }
+
+        // --- نظام إرسال الملاحظات الجديد ---
+        async function submitNote(e) {
+            e.preventDefault();
+            const loader = document.getElementById('loaderNotes');
+            const btn = e.target.querySelector('button');
+            loader.style.display = 'block';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            formData.append('action', 'addNote');
+            formData.append('card_id', document.getElementById('hiddenCardId1').value);
+
+            try {
+                await fetch(scriptURL, { method: "POST", body: formData });
+                alert("تم إرسال الملاحظة للإدارة بنجاح! ✅");
+                e.target.reset();
+                showSection('driverOptionsSec');
+            } catch (error) {
+                alert("حدث خطأ في الإرسال ❌");
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        // --- نظام عرض سجلات المندوب الجديد ---
+        function showMyRecords() {
+            const cardId = document.getElementById('hiddenCardId1').value;
+            if (!window.globalData) {
+                alert("جاري تحميل البيانات، يرجى الانتظار...");
+                return;
+            }
+
+            const myDeductions = (window.globalData.deductions || []).filter(row => row[6] && row[6].toString().trim() === cardId);
+            const myInvoices = (window.globalData.invoices || []).filter(row => row[7] && row[7].toString().trim() === cardId);
+
+            let html = "<h3 style='color:var(--gold); border-bottom:1px solid #eee; padding-bottom:10px;'>سجل الاستقطاعات (المرفوعة)</h3>";
+            html += "<div class='table-container'><table><thead><tr><th>التاريخ</th><th>عدد الطلبات</th><th>المحصل</th><th>الاستقطاع</th></tr></thead><tbody>";
+            if(myDeductions.length === 0) {
+                html += "<tr><td colspan='4'>لا توجد استقطاعات مسجلة</td></tr>";
+            } else {
+                myDeductions.forEach(row => {
+                    let dateStr = row[3] ? row[3].toString().split('T')[0] : "---";
+                    html += `<tr>
+                        <td dir="ltr">${dateStr}</td>
+                        <td>${row[2]}</td>
+                        <td style='color:#2ecc71; font-weight:bold;'>${parseFloat(row[8]||0).toFixed(3)}</td>
+                        <td style='color:#e74c3c; font-weight:bold;'>${parseFloat(row[7]||0).toFixed(3)}</td>
+                    </tr>`;
+                });
+            }
+            html += "</tbody></table></div>";
+
+            html += "<h3 style='color:var(--gold); border-bottom:1px solid #eee; padding-bottom:10px; margin-top:30px;'>سجل الفواتير (المرفوعة)</h3>";
+            html += "<div class='table-container'><table><thead><tr><th>التاريخ</th><th>المطعم</th><th>المبلغ</th></tr></thead><tbody>";
+            if(myInvoices.length === 0) {
+                html += "<tr><td colspan='3'>لا توجد فواتير مسجلة</td></tr>";
+            } else {
+                myInvoices.forEach(row => {
+                    let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
+                    html += `<tr>
+                        <td dir="ltr">${dateStr}</td>
+                        <td>${row[1]}</td>
+                        <td style='color:#2ecc71; font-weight:bold;'>${parseFloat(row[6]||0).toFixed(3)}</td>
+                    </tr>`;
+                });
+            }
+            html += "</tbody></table></div>";
+
+            document.getElementById('myRecordsContent').innerHTML = html;
+            showSection('myRecordsSec');
         }
 
         async function submitDeduction(e) {
@@ -585,12 +711,10 @@
             formData.append('action', 'addInvoice');
 
             try {
-                // التقاط الصورة وتحويلها (في حال قام المندوب بالتصوير)
                 let fileInput = document.getElementById('invoiceImage');
                 if (fileInput && fileInput.files.length > 0) {
                     let base64Image = await getBase64(fileInput.files[0]);
                     formData.append("imageFile", base64Image);
-                    // تسمية الصورة بشكل فريد
                     formData.append("imageName", "Invoice_" + (formData.get("card_id") || "Img") + "_" + Date.now());
                 }
 
@@ -648,15 +772,10 @@
             }
             
             if (!window.globalData || !window.globalData.invoices) { alert("جاري تحميل البيانات.. حاول مرة أخرى"); return; }
-
-            // حفظ اسم المطعم كمتغير عام لاستخدامه في التصفية
             window.currentLoggedRestaurant = restName;
-            
-            // عرض البيانات للمرة الأولى (بدون فلاتر تاريخ)
             renderRestaurantData(restName, "", "");
         }
 
-        // دالة جديدة لعرض البيانات مع إمكانية التصفية بالتواريخ
         function renderRestaurantData(restName, startDateStr, endDateStr) {
             const myOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
             
@@ -668,7 +787,6 @@
 
             let filteredOrders = myOrders;
 
-            // فلترة الطلبات إذا قام المطعم بتحديد تواريخ
             if (startDateStr || endDateStr) {
                 let start = startDateStr ? new Date(startDateStr) : new Date("2000-01-01");
                 let end = endDateStr ? new Date(endDateStr) : new Date("2100-01-01");
@@ -691,7 +809,7 @@
             let totalOrdersCount = 0;
             let totalAmountSum = 0;
 
-            let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th></tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>المندوب</th><th>التاريخ</th><th>المكان</th><th>التفاصيل</th><th>القيمة</th><th>صورة الفاتورة</th></tr></thead><tbody>`;
             
             filteredOrders.forEach(row => {
                 let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
@@ -707,12 +825,16 @@
                 totalOrdersCount++;
                 totalAmountSum += price;
 
+                let imgUrl = row[9] ? row[9].toString().trim() : "";
+                let imgBtn = imgUrl !== "" ? `<button onclick="showInvoiceImage('${imgUrl}')" style="background:var(--gold); color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-family:'Tajawal', sans-serif; font-size:12px; font-weight:bold;">🖼️ عرض</button>` : "<span style='color:#999; font-size:12px;'>بدون صورة</span>";
+
                 html += `<tr>
                     <td>${row[2]}</td>
                     <td dir="ltr">${dateStr}</td>
                     <td>${row[3]}</td>
                     <td>${orderDetails}</td>
                     <td style="color:#2ecc71; font-weight:bold;" dir="ltr">${price.toFixed(3)}</td>
+                    <td>${imgBtn}</td>
                 </tr>`;
             });
             html += `</tbody></table>`;
@@ -740,7 +862,6 @@
             document.getElementById('dashboardBlock').style.display = 'block';
         }
 
-        // الدالة التي يتم استدعاؤها عند الضغط على زر "تصفية"
         function applyRestaurantFilter() {
             let start = document.getElementById('filterStartDate').value;
             let end = document.getElementById('filterEndDate').value;
@@ -751,7 +872,11 @@
             }
         }
 
-        // --- الجزء الذي كان محذوفاً (الأحداث والأزرار) وتم استرجاعه ---
+        function showInvoiceImage(url) {
+            document.getElementById('modalImg').src = url;
+            document.getElementById('imageModal').style.display = 'block';
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const modal = document.getElementById("imageModal");
             const adminPanel = document.getElementById("adminPanel");
@@ -762,7 +887,7 @@
 
             document.getElementById("adminLoginBtn").onclick = function() {
                 let pwd = prompt("كلمة مرور الإدارة:");
-                if (pwd && btoa(pwd) === "OTA5MA==") {
+                if (pwd === "12345") {
                     adminPanel.style.display = "block";
                     generateAdminReport();
                     generateRestaurantsReport(); 
@@ -780,9 +905,7 @@
                 if (event.target == adminPanel) adminPanel.style.display = "none";
             };
         });
-        // -----------------------------------------------------------
 
-        // دوال التنقل في تبويبات الإدارة
         function switchAdminTab(tab) {
             document.getElementById('tabDrivers').classList.remove('active');
             document.getElementById('tabRests').classList.remove('active');
@@ -820,25 +943,17 @@
             let globalTotalNet = 0;
             let globalTotalDeductions = 0; 
             
-            // الدالة الأقوى لتنظيف الأرقام (تدعم الأرقام العربية الهندية)
             const safeParse = (val) => {
                 if (val === null || val === undefined || val === "") return 0;
                 if (typeof val === 'number') return val;
 
                 let s = val.toString().trim();
-                
-                // تجاهل التواريخ
                 if (s.includes('T00:') || s.includes('T1') || s.includes('.000Z') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
                     return 0; 
                 }
 
-                // 1. ترجمة الأرقام العربية (١٢٣) إلى إنجليزية (123) ليفهمها الموقع
                 s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-                
-                // 2. تحويل الفواصل بأنواعها إلى نقطة
                 let cleanStr = s.replace(/[,،]/g, '.');
-                
-                // 3. استخراج جميع الأرقام من النص وتجاهل أي حروف أو مسافات
                 let matches = cleanStr.match(/-?\d*\.?\d+/g); 
                 
                 let sum = 0;
@@ -855,21 +970,16 @@
 
             for (let i = 1; i < ded.length; i++) {
                 let row = ded[i];
-                
-                // تخطي صف "الإجمالي" الذي يصنعه جوجل شيت في أسفل الملف إن وجد
                 if (row[0] && row[0].toString().includes("الإجمالي")) continue;
 
                 let name = row[1] ? row[1].toString().trim() : "";
                 
-                // تجميع المبالغ للمناديب الذين نسوا كتابة أسمائهم بدلاً من حذفها
                 if (!name) {
                     if (row[4] || row[5]) name = "طلبات غير مسجلة (بدون اسم)";
                     else continue; 
                 }
 
                 let ordersCount = parseInt(row[2]) || 0;
-                
-                // جلب مبلغ الاستقطاع (نقوم بسحبه من العمود المخفي H إذا كان موجوداً لضمان الدقة، وإلا نجلبه من F)
                 let deductionAmount = (row[7] !== undefined && row[7] !== "") ? parseFloat(row[7]) : safeParse(row[5]);
                 if (isNaN(deductionAmount)) deductionAmount = safeParse(row[5]);
 
@@ -932,7 +1042,6 @@
             gridContainer.innerHTML = html;
         }
 
-        // دالة عرض معرض الصور الخاصة بكل مندوب
         function viewDriverImages(driverName) {
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             if (inv.length <= 1) return;
@@ -942,7 +1051,6 @@
             const grid = document.getElementById('imagesGrid');
             grid.innerHTML = ""; 
 
-            // البحث في شيت الفواتير (بافتراض أن رابط الصورة يخزن في العمود رقم 10 أي index 9)
             const driverInvoices = inv.filter(row => 
                 row[2] && row[2].toString().trim() === driverName && row[9] && row[9].toString().trim() !== ""
             );
@@ -971,7 +1079,6 @@
             });
         }
 
-        // توليد إحصائيات المطاعم للإدارة
         function generateRestaurantsReport() {
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             let rests = {};
@@ -1006,7 +1113,6 @@
             document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد فواتير مطاعم حالياً.</p>";
         }
 
-        // ميزة تصدير فاتورة مخصصة للمطعم بصيغة PDF (نسخة احترافية معدلة)
         function downloadRestaurantInvoice(restName) {
             if (!window.globalData || !window.globalData.invoices) {
                 alert("البيانات غير مكتملة، يرجى الانتظار قليلاً والمحاولة مجدداً.");
@@ -1020,7 +1126,6 @@
                 return;
             }
 
-            // إضافة خصائص CSS صريحة لمنع القص
             let pdfHtml = `
                 <style>
                     .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
@@ -1068,7 +1173,6 @@
                 let price = parseFloat(rawPriceStr);
                 if (rawPriceStr.includes('T') || isNaN(price)) price = 0;
 
-                // التعديل السحري: وضع كل سطر داخل tbody مستقل لضمان عدم انقسامه بين الصفحات
                 pdfHtml += `
                         <tbody class="no-break">
                             <tr style="${index % 2 === 0 ? 'background-color: #f9f9f9;' : ''}">
@@ -1106,7 +1210,7 @@
                 margin: [15, 10, 15, 10],
                 filename: `فاتورة_نعاون_${restName}.pdf`,
                 image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 2, useCORS: true }, // التعديل الأهم: تفعيل useCORS لجلب الشعار
+                html2canvas: { scale: 2, useCORS: true }, 
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             
@@ -1127,10 +1231,9 @@
             });
         }
 
-        // --- نظام الأرشفة والتصفير ---
         async function archiveCycle() {
             let pass = prompt("تحذير: هذه العملية ستقوم بنقل وتصفير جميع بيانات المناديب والمطاعم لتبدأ دورة جديدة.\nأدخل كلمة المرور للتأكيد:");
-           if(btoa(pass) !== "OTA5MA==") {
+           if(pass !== "12345") {
                 alert("كلمة المرور خاطئة ❌");
                 return;
             }
@@ -1154,7 +1257,6 @@
             }
         }
 
-        // --- دوال لوحة الإحصائيات والمستويات ---
         function openStatsPanel() {
             document.getElementById("adminStatsPanel").style.display = "block";
             generateStatsReport();
@@ -1192,11 +1294,11 @@
                 let percentage = totalGlobalOrders > 0 ? ((d.orders / totalGlobalOrders) * 100).toFixed(1) : 0;
                 
                 let level = "ضعيف 📉";
-                let color = "#e74c3c"; // أحمر
+                let color = "#e74c3c"; 
                 
-                if (d.orders >= 100) { level = "متميز 🌟"; color = "#9b59b6"; } // بنفسجي
-                else if (d.orders >= 50) { level = "جيد جداً 🟢"; color = "#2ecc71"; } // أخضر
-                else if (d.orders >= 20) { level = "متوسط 🟡"; color = "#f39c12"; } // برتقالي مائل للذهبي
+                if (d.orders >= 100) { level = "متميز 🌟"; color = "#9b59b6"; } 
+                else if (d.orders >= 50) { level = "جيد جداً 🟢"; color = "#2ecc71"; } 
+                else if (d.orders >= 20) { level = "متوسط 🟡"; color = "#f39c12"; } 
 
                 pageBuffer += `
                 <div class="stat-card">
@@ -1246,17 +1348,16 @@
             });
         }
 
-        // --- إضافة الدالة المفقودة والخاصة بكشف حساب المندوب (PDF) ---
         function downloadDriverStatement(driverName) {
             if (!window.globalData || !window.globalData.deductions) return;
 
             const driverData = window.globalData.deductions.filter(row => row[1] && row[1].toString().trim() === driverName);
             
             let pdfHtml = `
-                <div style="direction: rtl; font-family: 'Tajawal', sans-serif; padding: 20px; border: 10px solid #D4AF37;">
+                <div style="direction: rtl; font-family: 'Tajawal', sans-serif; padding: 20px; border: 10px solid var(--dark-gray);">
                     <div style="text-align: center; margin-bottom: 20px;">
                         <img src="https://i.imgur.com/nYQiffV.png" crossorigin="anonymous" style="width: 80px; border-radius: 50%;">
-                        <h1 style="color: #D4AF37; margin: 5px 0;">فريق نعاون لخدمات التوصيل</h1>
+                        <h1 style="color: var(--dark-gray); margin: 5px 0;">فريق نعاون لخدمات التوصيل</h1>
                         <p style="margin: 0; font-weight: bold;">كشف حساب دوري للمندوب</p>
                     </div>
                     <div style="margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
@@ -1265,7 +1366,7 @@
                     </div>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: center;">
                         <thead>
-                            <tr style="background-color: #D4AF37; color: white;">
+                            <tr style="background-color: var(--dark-gray); color: white;">
                                 <th style="padding: 10px; border: 1px solid #ddd;">التاريخ</th>
                                 <th style="padding: 10px; border: 1px solid #ddd;">عدد الطلبات</th>
                                 <th style="padding: 10px; border: 1px solid #ddd;">المبلغ المحصل</th>
@@ -1284,7 +1385,7 @@
                 let ded = parseFloat(row[7]) || 0;
                 pdfHtml += `
                     <tr style="page-break-inside: avoid;">
-                        <td style="padding: 8px; border: 1px solid #ddd;">${row[3]}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;" dir="ltr">${row[3] ? row[3].toString().split('T')[0] : ""}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${row[2]}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${revenue.toFixed(3)}</td>
                         <td style="padding: 8px; border: 1px solid #ddd;">${ded.toFixed(3)}</td>
@@ -1302,7 +1403,7 @@
                         <p><b>إجمالي الطلبات:</b> ${totalOrders}</p>
                         <p><b>إجمالي المحصل:</b> ${totalRevenue.toFixed(3)} ر.ع</p>
                         <p><b>إجمالي الاستقطاع:</b> ${totalDeds.toFixed(3)} ر.ع</p>
-                        <h2 style="color: #D4AF37; margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                        <h2 style="color: var(--dark-gray); margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
                             صافي المستحق للمندوب: ${(totalRevenue - totalDeds).toFixed(3)} ر.ع
                         </h2>
                     </div>
@@ -1320,63 +1421,62 @@
             };
             html2pdf().from(pdfHtml).set(opt).save();
         }
+        
         function exportComprehensiveData() {
-    if (!window.globalData) {
-        alert("جاري تحميل البيانات، يرجى المحاولة بعد ثوانٍ...");
-        return;
-    }
+            if (!window.globalData) {
+                alert("جاري تحميل البيانات، يرجى المحاولة بعد ثوانٍ...");
+                return;
+            }
 
-    const invoices = window.globalData.invoices || [];
-    const deductions = window.globalData.deductions || [];
+            const invoices = window.globalData.invoices || [];
+            const deductions = window.globalData.deductions || [];
 
-    // تصميم الجدول بتنسيق HTML ليدعمه Excel مع الألوان والخطوط
-    let html = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head><meta charset="utf-8"></head>
-        <body>
-            <h2 style="text-align:center; color:#D4AF37;">تقرير فريق نعاون الشامل - بتاريخ ${new Date().toLocaleDateString('ar-OM')}</h2>
-            
-            <h3>1. سجل الاستقطاعات والمحاصيل</h3>
-            <table border="1">
-                <tr style="background-color:#D4AF37; color:white; font-weight:bold;">
-                    <th>التوقيت</th><th>اسم المندوب</th><th>عدد الطلبات</th><th>التاريخ</th><th>المبالغ التفصيلية</th><th>الاستقطاع (ر.ع)</th><th>إجمالي المحصل</th>
-                </tr>
-                ${deductions.slice(1).map(row => `
-                    <tr>
-                        <td>${row[0] || ""}</td><td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td>
-                        <td>${row[4] || ""}</td><td style="color:red;">${parseFloat(row[7] || 0).toFixed(3)}</td><td style="color:green; font-weight:bold;">${parseFloat(row[8] || 0).toFixed(3)}</td>
-                    </tr>
-                `).join('')}
-            </table>
+            let html = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body>
+                    <h2 style="text-align:center; color:#333333;">تقرير فريق نعاون الشامل - بتاريخ ${new Date().toLocaleDateString('ar-OM')}</h2>
+                    
+                    <h3>1. سجل الاستقطاعات والمحاصيل</h3>
+                    <table border="1">
+                        <tr style="background-color:#333333; color:white; font-weight:bold;">
+                            <th>التوقيت</th><th>اسم المندوب</th><th>عدد الطلبات</th><th>التاريخ</th><th>المبالغ التفصيلية</th><th>الاستقطاع (ر.ع)</th><th>إجمالي المحصل</th>
+                        </tr>
+                        ${deductions.slice(1).map(row => `
+                            <tr>
+                                <td>${row[0] || ""}</td><td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td>
+                                <td>${row[4] || ""}</td><td style="color:red;">${parseFloat(row[7] || 0).toFixed(3)}</td><td style="color:green; font-weight:bold;">${parseFloat(row[8] || 0).toFixed(3)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
 
-            <br><br>
+                    <br><br>
 
-            <h3>2. سجل فواتير المطاعم</h3>
-            <table border="1">
-                <tr style="background-color:#2c3e50; color:white; font-weight:bold;">
-                    <th>المطعم</th><th>المندوب</th><th>المكان</th><th>التاريخ</th><th>التفاصيل</th><th>المبلغ (ر.ع)</th><th>رابط الصورة</th>
-                </tr>
-                ${invoices.slice(1).map(row => `
-                    <tr>
-                        <td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td><td>${row[4] || ""}</td>
-                        <td>${row[5] || ""}</td><td>${parseFloat(row[8] || 0).toFixed(3)}</td><td>${row[9] || "لا توجد"}</td>
-                    </tr>
-                `).join('')}
-            </table>
-        </body>
-        </html>
-    `;
+                    <h3>2. سجل فواتير المطاعم</h3>
+                    <table border="1">
+                        <tr style="background-color:#2c3e50; color:white; font-weight:bold;">
+                            <th>المطعم</th><th>المندوب</th><th>المكان</th><th>التاريخ</th><th>التفاصيل</th><th>المبلغ (ر.ع)</th><th>رابط الصورة</th>
+                        </tr>
+                        ${invoices.slice(1).map(row => `
+                            <tr>
+                                <td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td><td>${row[4] || ""}</td>
+                                <td>${row[5] || ""}</td><td>${parseFloat(row[8] || 0).toFixed(3)}</td><td>${row[9] || "لا توجد"}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                </body>
+                </html>
+            `;
 
-    // تحويل الكود إلى ملف للتحميل
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `تقرير_نعاون_الشامل_${new Date().toLocaleDateString('ar-OM')}.xls`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `تقرير_نعاون_الشامل_${new Date().toLocaleDateString('ar-OM')}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
     </script>
 </body>
 </html>
