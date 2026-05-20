@@ -290,7 +290,7 @@
     </div>
 
     <div id="notesSec" class="page-section">
-        <h2>تسجيل ملاحظة</h2>
+        <h2>رفع ملاحظة أو شكوى للإدارة</h2>
         <form id="notesForm" onsubmit="submitNote(event)">
             <div class="input-group">
                 <label>اسم المندوب</label>
@@ -298,7 +298,7 @@
             </div>
             <div class="input-group">
                 <label>محتوى الملاحظة</label>
-                <textarea name="note_text" rows="4" required placeholder="اكتب ملاحظتك هنا بوضوح..."></textarea>
+                <textarea name="note_text" rows="4" required placeholder="اكتب ملاحظتك أو شكواك هنا بوضوح..."></textarea>
             </div>
             <button type="submit" class="submit-btn" style="background:#34495e;">إرسال للإدارة</button>
             <div id="loaderNotes" class="loader"></div>
@@ -347,7 +347,9 @@
         <form id="invoiceForm" onsubmit="submitInvoice(event)">
             <div class="input-group">
                 <label>اسم المطعم</label>
-                <input type="text" name="rest_name" required>
+                <select name="rest_name" id="invoiceRestSelect" required>
+                    <option value="">جاري تحميل قائمة المطاعم...</option>
+                </select>
             </div>
             <div class="input-group">
                 <label>اسم المندوب</label>
@@ -512,7 +514,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwNaRsnAV_7cr0nEa8E9jopY4WDpyQRT8IsoehcvwebzlUAGfVHthrKWWmv7Wltmv0p3Q/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzHI1q7LJbBFT5W7LpKQb1LxQG6-f9PXcjDilHgDLVML4fHNfEdENirpV9RGx3kbKL_RQ/exec";
         window.globalData = null;
 
         function getBase64(file) {
@@ -528,12 +530,14 @@
             let cachedData = localStorage.getItem('googleDataCache');
             if (cachedData) {
                 window.globalData = JSON.parse(cachedData);
+                populateRestaurantsDropdown(); // تعبئة القائمة فوراً من الكاش
             }
 
             try {
                 const response = await fetch(scriptURL);
                 window.globalData = await response.json();
                 localStorage.setItem('googleDataCache', JSON.stringify(window.globalData));
+                populateRestaurantsDropdown(); // تعبئة القائمة بالبيانات الحديثة
             } catch (error) {
                 console.error("خطأ في جلب البيانات:", error);
             }
@@ -552,7 +556,26 @@
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
-        // --- الدالة الجديدة لحساب الاستقطاع بشكل فوري من شيت Rates ---
+        // دالة تعبئة القائمة المنسدلة للمطاعم ديناميكياً
+        function populateRestaurantsDropdown() {
+            if (!window.globalData || !window.globalData.restaurants) return;
+            const selectEl = document.getElementById('invoiceRestSelect');
+            if (!selectEl) return;
+            
+            selectEl.innerHTML = '<option value="">-- اختر المطعم من القائمة --</option>';
+            
+            const restsData = window.globalData.restaurants;
+            for (let i = 1; i < restsData.length; i++) {
+                let restName = restsData[i][0] ? restsData[i][0].toString().trim() : "";
+                if (restName !== "") {
+                    let option = document.createElement('option');
+                    option.value = restName;
+                    option.innerText = restName;
+                    selectEl.appendChild(option);
+                }
+            }
+        }
+
         function calculateLiveDeduction() {
             if (!window.globalData || !window.globalData.rates) return;
             const rates = window.globalData.rates;
@@ -564,7 +587,6 @@
                 let cleanLine = lines[i].replace(/,/g, '.').replace(/،/g, '.').trim();
                 let val = parseFloat(cleanLine);
                 if (!isNaN(val)) {
-                    // البحث في قائمة الأسعار
                     for (let r = 1; r < rates.length; r++) { 
                         let ratePrice = parseFloat(rates[r][0]);
                         if (val === ratePrice) {
@@ -574,7 +596,6 @@
                     }
                 }
             }
-            // وضع الناتج في حقل الاستقطاع
             document.getElementById('deductionInput').value = totalDeduction.toFixed(3);
         }
 
