@@ -283,7 +283,7 @@
         <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
         
         <button class="main-btn" style="margin-top:10px; background:#e67e22; border-color:#d35400; color:white;" onclick="showMyRecords()">📂 سجلاتي</button>
-        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 تسجيل ملاحظة</button>
+        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 رفع ملاحظة أو شكوى</button>
         <button class="main-btn" style="margin-top:10px; background:#e74c3c; color:white; border-color:#c0392b;" onclick="showSection('apologySec')">🚫 اعتذار عن مناوبة</button>
         
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
@@ -330,11 +330,11 @@
             </div>
             <div class="input-group">
                 <label>مبلغ التوصيل (كل مبلغ في سطر جديد)</label>
-                <textarea name="amounts" rows="4" placeholder="مثال:&#10;1.500&#10;2.000"></textarea>
+                <textarea name="amounts" id="amountsInput" rows="4" placeholder="مثال:&#10;1.500&#10;2.000" oninput="calculateLiveDeduction()" required></textarea>
             </div>
             <div class="input-group">
                 <label>الاستقطاع الكلي (ر.ع)</label>
-                <input type="text" name="deduction" required>
+                <input type="text" name="deduction" id="deductionInput" readonly style="background-color: #e9ecef; color: #e74c3c; font-weight: bold; cursor: not-allowed;" placeholder="يتم حسابه تلقائياً..." required>
             </div>
             <button type="submit" class="submit-btn">إرسال البيانات</button>
             <div id="loader1" class="loader"></div>
@@ -512,7 +512,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbx_v2iVddHvXLQFuUftCL82FUMO84JfhBvOYBi_6UF5LKqtdNoSfttOGdnOTKqCswmq5w/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwNaRsnAV_7cr0nEa8E9jopY4WDpyQRT8IsoehcvwebzlUAGfVHthrKWWmv7Wltmv0p3Q/exec";
         window.globalData = null;
 
         function getBase64(file) {
@@ -550,6 +550,32 @@
         function goBack() {
             document.querySelectorAll('.page-section').forEach(sec => sec.style.display = 'none');
             document.getElementById('mainMenu').style.display = 'flex';
+        }
+
+        // --- الدالة الجديدة لحساب الاستقطاع بشكل فوري من شيت Rates ---
+        function calculateLiveDeduction() {
+            if (!window.globalData || !window.globalData.rates) return;
+            const rates = window.globalData.rates;
+            const amountsText = document.getElementById('amountsInput').value;
+            const lines = amountsText.split(/[\n\r]+/);
+            let totalDeduction = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                let cleanLine = lines[i].replace(/,/g, '.').replace(/،/g, '.').trim();
+                let val = parseFloat(cleanLine);
+                if (!isNaN(val)) {
+                    // البحث في قائمة الأسعار
+                    for (let r = 1; r < rates.length; r++) { 
+                        let ratePrice = parseFloat(rates[r][0]);
+                        if (val === ratePrice) {
+                            totalDeduction += parseFloat(rates[r][1]) || 0;
+                            break;
+                        }
+                    }
+                }
+            }
+            // وضع الناتج في حقل الاستقطاع
+            document.getElementById('deductionInput').value = totalDeduction.toFixed(3);
         }
 
         function checkDriverLogin() {
@@ -877,7 +903,6 @@
                 modal.style.display = "none";
             };
 
-            // --- التحديث الجديد: فحص كلمة مرور الإدارة الديناميكية القادمة من جوجل شيت ---
             document.getElementById("adminLoginBtn").onclick = function() {
                 let pwd = prompt("كلمة مرور الإدارة:");
                 let correctPass = (window.globalData && window.globalData.adminPassword) ? window.globalData.adminPassword.toString().trim() : "12345";
