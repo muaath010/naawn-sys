@@ -283,14 +283,14 @@
         <button class="main-btn" onclick="showSection('invoiceSec')">تسجيل فاتورة طلبية</button>
         
         <button class="main-btn" style="margin-top:10px; background:#e67e22; border-color:#d35400; color:white;" onclick="showMyRecords()">📂 سجلاتي</button>
-        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 تسجيل ملاحظة </button>
+        <button class="main-btn" style="margin-top:10px; background:#34495e; border-color:#2c3e50; color:white;" onclick="showSection('notesSec')">📝 رفع ملاحظة أو شكوى</button>
         <button class="main-btn" style="margin-top:10px; background:#e74c3c; color:white; border-color:#c0392b;" onclick="showSection('apologySec')">🚫 اعتذار عن مناوبة</button>
         
         <button class="back-btn" onclick="goBack()">تسجيل خروج</button>
     </div>
 
     <div id="notesSec" class="page-section">
-        <h2>تسجيل ملاحظة</h2>
+        <h2>رفع ملاحظة أو شكوى للإدارة</h2>
         <form id="notesForm" onsubmit="submitNote(event)">
             <div class="input-group">
                 <label>اسم المندوب</label>
@@ -298,7 +298,7 @@
             </div>
             <div class="input-group">
                 <label>محتوى الملاحظة</label>
-                <textarea name="note_text" rows="4" required placeholder="اكتب ملاحظتك هنا بوضوح..."></textarea>
+                <textarea name="note_text" rows="4" required placeholder="اكتب ملاحظتك أو شكواك هنا بوضوح..."></textarea>
             </div>
             <button type="submit" class="submit-btn" style="background:#34495e;">إرسال للإدارة</button>
             <div id="loaderNotes" class="loader"></div>
@@ -504,6 +504,18 @@
         </div>
 
         <div id="restsAdminView" style="display: none; margin-top: 20px;">
+            <div style="background: white; padding: 15px; border-radius: 15px; margin: 0 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; color: #555; text-align: right; display: block; margin-bottom: 5px; font-weight:bold;">من تاريخ:</label>
+                    <input type="date" id="adminFilterStart" style="padding: 8px; font-size: 14px; width: 100%; border:1px solid #ccc; border-radius: 8px;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 13px; color: #555; text-align: right; display: block; margin-bottom: 5px; font-weight:bold;">إلى تاريخ:</label>
+                    <input type="date" id="adminFilterEnd" style="padding: 8px; font-size: 14px; width: 100%; border:1px solid #ccc; border-radius: 8px;">
+                </div>
+                <button onclick="generateRestaurantsReport()" class="submit-btn" style="background: var(--gold); padding: 10px; width: auto; margin-top: 25px; font-size: 14px;">🔍 تصفية وإصدار</button>
+            </div>
+            
             <div id="restsCardsGrid" class="admin-grid"></div>
         </div>
     </div>
@@ -514,7 +526,7 @@
     </div>
 
     <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzHI1q7LJbBFT5W7LpKQb1LxQG6-f9PXcjDilHgDLVML4fHNfEdENirpV9RGx3kbKL_RQ/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyjWFaphZy9gOMdrWwpSZOxHdTj2W-e6OmDdxH6SrKzOfRoZZo8LA9MAUzPT0l7rT87-Q/exec";
         window.globalData = null;
 
         function getBase64(file) {
@@ -530,14 +542,14 @@
             let cachedData = localStorage.getItem('googleDataCache');
             if (cachedData) {
                 window.globalData = JSON.parse(cachedData);
-                populateRestaurantsDropdown(); // تعبئة القائمة فوراً من الكاش
+                populateRestaurantsDropdown();
             }
 
             try {
                 const response = await fetch(scriptURL);
                 window.globalData = await response.json();
                 localStorage.setItem('googleDataCache', JSON.stringify(window.globalData));
-                populateRestaurantsDropdown(); // تعبئة القائمة بالبيانات الحديثة
+                populateRestaurantsDropdown();
             } catch (error) {
                 console.error("خطأ في جلب البيانات:", error);
             }
@@ -556,7 +568,6 @@
             document.getElementById('mainMenu').style.display = 'flex';
         }
 
-        // دالة تعبئة القائمة المنسدلة للمطاعم ديناميكياً
         function populateRestaurantsDropdown() {
             if (!window.globalData || !window.globalData.restaurants) return;
             const selectEl = document.getElementById('invoiceRestSelect');
@@ -1124,9 +1135,25 @@
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             let rests = {};
 
+            // التعديل: قراءة الفلتر من حقول الإدارة
+            let startStr = document.getElementById('adminFilterStart').value;
+            let endStr = document.getElementById('adminFilterEnd').value;
+            let startDate = startStr ? new Date(startStr) : new Date("2000-01-01");
+            let endDate = endStr ? new Date(endStr) : new Date("2100-01-01");
+            startDate.setHours(0,0,0,0);
+            endDate.setHours(23,59,59,999);
+
             for (let i = 1; i < inv.length; i++) {
                 let name = inv[i][1] ? inv[i][1].toString().trim() : "";
                 if (!name) continue;
+
+                // تطبيق الفلتر على تاريخ الطلبية
+                let rowDateStr = inv[i][4] ? inv[i][4].toString().split('T')[0] : "";
+                if (rowDateStr) {
+                    let rowDate = new Date(rowDateStr);
+                    if (rowDate < startDate || rowDate > endDate) continue; // تخطي الطلبية إذا لم تكن في التاريخ المحدد
+                }
+
                 let rawPrice = (inv[i][8] !== undefined && inv[i][8] !== "") ? inv[i][8].toString() : (inv[i][6] ? inv[i][6].toString() : "0");
                 let price = parseFloat(rawPrice.replace(/,/g, '.'));
                 if (rawPrice.includes('T') || isNaN(price)) price = 0;
@@ -1151,7 +1178,7 @@
                     </button>
                 </div>`;
             }
-            document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%;'>لا توجد فواتير مطاعم حالياً.</p>";
+            document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%; color:red;'>لا توجد فواتير مطاعم في التاريخ المحدد.</p>";
         }
 
         function downloadRestaurantInvoice(restName) {
@@ -1160,12 +1187,30 @@
                 return;
             }
 
-            const restOrders = window.globalData.invoices.filter(row => row[1] && row[1].toString().trim() === restName);
+            let startStr = document.getElementById('adminFilterStart').value;
+            let endStr = document.getElementById('adminFilterEnd').value;
+            let startDate = startStr ? new Date(startStr) : new Date("2000-01-01");
+            let endDate = endStr ? new Date(endStr) : new Date("2100-01-01");
+            startDate.setHours(0,0,0,0);
+            endDate.setHours(23,59,59,999);
+
+            const restOrders = window.globalData.invoices.filter(row => {
+                if (!row[1] || row[1].toString().trim() !== restName) return false;
+                
+                let rowDateStr = row[4] ? row[4].toString().split('T')[0] : "";
+                if (rowDateStr) {
+                    let rowDate = new Date(rowDateStr);
+                    if (rowDate < startDate || rowDate > endDate) return false;
+                }
+                return true;
+            });
             
             if (restOrders.length === 0) {
-                alert("لا توجد طلبات مسجلة لهذا المطعم.");
+                alert("لا توجد طلبات مسجلة لهذا المطعم في التاريخ المحدد.");
                 return;
             }
+
+            let periodText = (startStr || endStr) ? `من ${startStr || 'بداية السجل'} إلى ${endStr || 'اليوم'}` : "جميع السجلات";
 
             let pdfHtml = `
                 <style>
@@ -1184,7 +1229,7 @@
                         </div>
                         <div style="text-align: left;">
                             <p style="margin: 5px 0;"><b>تاريخ الإصدار:</b> ${new Date().toLocaleDateString('ar-OM')}</p>
-                            <p style="margin: 5px 0;"><b>العملة:</b> ريال عماني (ر.ع)</p>
+                            <p style="margin: 5px 0; color:#e74c3c;"><b>الفترة:</b> ${periodText}</p>
                         </div>
                     </div>
 
