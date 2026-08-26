@@ -554,7 +554,7 @@
                 console.error("خطأ في جلب البيانات:", error);
             }
         }
-        window.addEventListener('load', fetchGoogleData);
+        document.addEventListener('DOMContentLoaded', fetchGoogleData);
         
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
