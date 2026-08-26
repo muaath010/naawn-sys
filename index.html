@@ -610,17 +610,54 @@
             document.getElementById('deductionInput').value = totalDeduction.toFixed(3);
         }
 
-        function checkDriverLogin() {
+       async function checkDriverLogin() {
             const cardId = document.getElementById('driverCardInput').value.trim();
             const pass = document.getElementById('driverPassInput').value.trim();
+            
+            // جلب زر المتابعة لتغيير حالته أثناء التحميل
+            const loginBtn = document.querySelector('#driverLoginSec .submit-btn');
             
             if (cardId === "" || pass === "") {
                 alert("الرجاء إدخال رقم البطاقة وكلمة المرور");
                 return;
             }
 
+            // تعطيل الزر مؤقتاً وإظهار رسالة تحميل
+            if (loginBtn) {
+                loginBtn.innerText = "⏳ جاري التحقق...";
+                loginBtn.disabled = true;
+            }
+
+            // --- نقطة التفتيش: الاتصال بالسيرفر المركزي (Hostinger) ---
+            try {
+                const apiResponse = await fetch('https://lightgreen-squirrel-796252.hostingersite.com/api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'check_external_driver', driverId: cardId })
+                });
+                
+                const apiData = await apiResponse.json();
+
+                // إذا كان السيرفر المركزي يقول أن الحساب مجمد أو منتهي
+                if(apiData.access === 'denied') {
+                    alert(apiData.message); 
+                    if (loginBtn) {
+                        loginBtn.innerText = "متابعة";
+                        loginBtn.disabled = false;
+                    }
+                    return; // إيقاف عملية الدخول فوراً وطرده
+                }
+            } catch (err) {
+                console.log("تنبيه: تعذر الوصول للسيرفر المركزي، سيتم المتابعة محلياً.");
+            }
+            // -----------------------------------------------------------
+
             if (!window.globalData || !window.globalData.passwords) {
                 alert("جاري تحميل البيانات.. يرجى الانتظار ثواني ثم المحاولة مرة أخرى.");
+                if (loginBtn) {
+                    loginBtn.innerText = "متابعة";
+                    loginBtn.disabled = false;
+                }
                 return;
             }
 
@@ -648,8 +685,13 @@
             } else {
                 alert("رقم البطاقة أو كلمة المرور غير صحيحة ❌");
             }
-        }
 
+            // إعادة الزر لحالته الطبيعية بعد الانتهاء
+            if (loginBtn) {
+                loginBtn.innerText = "متابعة";
+                loginBtn.disabled = false;
+            }
+        }
         function acceptAnnouncement() {
             document.getElementById('announcementModal').style.display = 'none';
             showSection('driverOptionsSec');
