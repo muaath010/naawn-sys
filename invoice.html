@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة المتجر - فريق نعاون</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f4f7fe;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .invoice-container {
+            max-width: 210mm; /* عرض ورقة A4 */
+            min-height: 297mm; /* طول ورقة A4 */
+            margin: auto;
+            background: #fff;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            border-top: 10px solid var(--dark);
+            border-bottom: 10px solid var(--gold);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .header-logo {
+            text-align: center;
+        }
+        .header-logo img {
+            width: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+        }
+        .header-logo h1 {
+            color: var(--gold);
+            margin: 10px 0 0;
+            font-size: 1.5rem;
+        }
+        .header-info h2 {
+            margin: 0 0 10px;
+            color: var(--dark);
+            font-size: 1.8rem;
+        }
+        .header-info p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: var(--dark);
+            color: #fff;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary-box {
+            background: #fdfaf0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            text-align: left;
+            direction: rtl;
+        }
+        .summary-box p {
+            font-size: 1.2rem;
+            margin: 0 0 10px;
+            color: var(--dark);
+        }
+        .summary-box h3 {
+            font-size: 1.8rem;
+            color: #27ae60;
+            margin: 10px 0 0;
+            border-top: 2px dashed var(--gold);
+            padding-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 13px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        
+        /* أزرار الطباعة */
+        .print-actions {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .print-btn {
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-family: 'Tajawal', sans-serif;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        .print-btn:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        /* الإعدادات السحرية للطباعة (تمنع القص نهائياً) */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body {
+                background: none;
+                padding: 0;
+            }
+            .invoice-container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+            }
+            /* إخفاء أزرار الطباعة عند سحب الفاتورة */
+            .print-actions {
+                display: none !important;
+            }
+            /* تكرار رأس الجدول في كل صفحة جديدة */
+            thead {
+                display: table-header-group; 
+            }
+            /* منع انقسام السطر الواحد بين صفحتين */
+            tr {
+                page-break-inside: avoid; 
+            }
+            td, th {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-actions">
+        <button class="print-btn" onclick="window.print()">🖨️ طباعة أو حفظ كـ PDF</button>
+        <p style="font-size: 13px; color: #666; margin-top: 10px;">لأفضل نتيجة إلكترونية: اختر الوجهة "حفظ بتنسيق PDF" من نافذة الطباعة</p>
+    </div>
+
+    <div class="invoice-container" id="invoiceArea">
+        <div class="header">
+            <div class="header-info">
+                <h2>فاتورة تفصيلية لشركاء التوصيل</h2>
+                <p><b>اسم الشريك (المطعم):</b> <span id="valRestName" style="color: #e67e22; font-weight: bold;">جاري التحميل...</span></p>
+                <p><b>تاريخ الإصدار:</b> <span id="valPrintDate"></span></p>
+                <p><b>الفترة المحددة:</b> <span id="valPeriod" style="color: #e74c3c;"></span></p>
+            </div>
+            <div class="header-logo">
+                <img src="https://i.imgur.com/nYQiffV.png" alt="شعار فريق نعاون" crossorigin="anonymous">
+                <h1>فريق نعاون</h1>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">م</th>
+                    <th style="width: 15%;">التاريخ</th>
+                    <th style="width: 20%;">المندوب</th>
+                    <th style="width: 30%;">تفاصيل الطلب</th>
+                    <th style="width: 15%;">مكان التوصيل</th>
+                    <th style="width: 15%;">المبلغ (ر.ع)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- سيتم حقن البيانات هنا تلقائياً -->
+            </tbody>
+        </table>
+
+        <div class="summary-box">
+            <p><b>إجمالي عدد الطلبات للفترة المحددة:</b> <strong id="valOrdersCount" style="color:var(--dark);">0</strong> طلبات</p>
+            <h3>الإجمالي المستحق للمطعم: <span id="valTotal">0.000</span> ر.ع</h3>
+        </div>
+
+        <div class="footer">
+            <p>صدرت هذه الفاتورة آلياً من النظام الإلكتروني لفريق نعاون لخدمات التوصيل، وتعتبر وثيقة رسمية للمطابقة.</p>
+            <p>للتواصل والاستفسار ومراجعة الحسابات، يرجى التواصل مع إدارة الفريق.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // سحب البيانات من الذاكرة المؤقتة التي أرسلها ملف index.html
+            const dataStr = localStorage.getItem('printInvoiceData');
+            
+            if (!dataStr) {
+                alert("لم يتم العثور على بيانات الفاتورة! الرجاء العودة للوحة الإدارة والضغط على زر الطباعة من هناك.");
+                return;
+            }
+
+            const data = JSON.parse(dataStr);
+
+            // تعبئة البيانات في النصوص
+            document.getElementById('valRestName').innerText = data.restaurantName;
+            document.getElementById('valPrintDate').innerText = data.printDate;
+            document.getElementById('valPeriod').innerText = data.period;
+            document.getElementById('valOrdersCount').innerText = data.ordersCount;
+            document.getElementById('valTotal').innerText = data.total;
+
+            // بناء الجدول
+            const tbody = document.getElementById('tableBody');
+            let rowsHtml = '';
+
+            data.orders.forEach(order => {
+                rowsHtml += `
+                    <tr>
+                        <td>${order.index}</td>
+                        <td dir="ltr">${order.date}</td>
+                        <td>${order.driver}</td>
+                        <td>${order.details}</td>
+                        <td>${order.location}</td>
+                        <td style="font-weight: bold; color: #27ae60;">${order.price}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rowsHtml;
+
+            // فتح نافذة الطباعة تلقائياً بعد ترتيب الصفحة بنصف ثانية
+            setTimeout(() => {
+                window.print();
+            }, 600);
+        });
+    </script>
+</body>
+</html>
