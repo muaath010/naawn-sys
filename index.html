@@ -614,7 +614,6 @@
             const cardId = document.getElementById('driverCardInput').value.trim();
             const pass = document.getElementById('driverPassInput').value.trim();
             
-            // جلب زر المتابعة لتغيير حالته أثناء التحميل
             const loginBtn = document.querySelector('#driverLoginSec .submit-btn');
             
             if (cardId === "" || pass === "") {
@@ -622,13 +621,11 @@
                 return;
             }
 
-            // تعطيل الزر مؤقتاً وإظهار رسالة تحميل
             if (loginBtn) {
                 loginBtn.innerText = "⏳ جاري التحقق...";
                 loginBtn.disabled = true;
             }
 
-            // --- نقطة التفتيش: الاتصال بالسيرفر المركزي (Hostinger) ---
             try {
                 const apiResponse = await fetch('https://lightgreen-squirrel-796252.hostingersite.com/api.php', {
                     method: 'POST',
@@ -638,19 +635,17 @@
                 
                 const apiData = await apiResponse.json();
 
-                // إذا كان السيرفر المركزي يقول أن الحساب مجمد أو منتهي
                 if(apiData.access === 'denied') {
                     alert(apiData.message); 
                     if (loginBtn) {
                         loginBtn.innerText = "متابعة";
                         loginBtn.disabled = false;
                     }
-                    return; // إيقاف عملية الدخول فوراً وطرده
+                    return; 
                 }
             } catch (err) {
                 console.log("تنبيه: تعذر الوصول للسيرفر المركزي، سيتم المتابعة محلياً.");
             }
-            // -----------------------------------------------------------
 
             if (!window.globalData || !window.globalData.passwords) {
                 alert("جاري تحميل البيانات.. يرجى الانتظار ثواني ثم المحاولة مرة أخرى.");
@@ -686,12 +681,12 @@
                 alert("رقم البطاقة أو كلمة المرور غير صحيحة ❌");
             }
 
-            // إعادة الزر لحالته الطبيعية بعد الانتهاء
             if (loginBtn) {
                 loginBtn.innerText = "متابعة";
                 loginBtn.disabled = false;
             }
         }
+        
         function acceptAnnouncement() {
             document.getElementById('announcementModal').style.display = 'none';
             showSection('driverOptionsSec');
@@ -1177,7 +1172,6 @@
             const inv = window.globalData.invoices || window.globalData.Invoices || [];
             let rests = {};
 
-            // التعديل: قراءة الفلتر من حقول الإدارة
             let startStr = document.getElementById('adminFilterStart').value;
             let endStr = document.getElementById('adminFilterEnd').value;
             let startDate = startStr ? new Date(startStr) : new Date("2000-01-01");
@@ -1189,11 +1183,10 @@
                 let name = inv[i][1] ? inv[i][1].toString().trim() : "";
                 if (!name) continue;
 
-                // تطبيق الفلتر على تاريخ الطلبية
                 let rowDateStr = inv[i][4] ? inv[i][4].toString().split('T')[0] : "";
                 if (rowDateStr) {
                     let rowDate = new Date(rowDateStr);
-                    if (rowDate < startDate || rowDate > endDate) continue; // تخطي الطلبية إذا لم تكن في التاريخ المحدد
+                    if (rowDate < startDate || rowDate > endDate) continue; 
                 }
 
                 let rawPrice = (inv[i][8] !== undefined && inv[i][8] !== "") ? inv[i][8].toString() : (inv[i][6] ? inv[i][6].toString() : "0");
@@ -1215,15 +1208,21 @@
                         <span>إجمالي الطلبات: <strong>${r.count}</strong></span>
                         <span style="color:#e67e22;">الإجمالي: <strong>${r.total.toFixed(3)} ر.ع</strong></span>
                     </div>
-                    <button class="main-btn" style="background:#2c3e50; border-color:#1a252f; color:white; font-size:14px; padding:10px; width:100%; border-radius:10px;" onclick="downloadRestaurantInvoice('${name}')">
-                        📄 تصدير فاتورة المطعم (PDF)
-                    </button>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="main-btn" style="background:#27ae60; border-color:#2ecc71; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="exportRestaurantExcel('${name}')">
+                            📊 تصدير إكسل (Excel)
+                        </button>
+                        <button class="main-btn" style="background:#2c3e50; border-color:#1a252f; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="openInvoicePage('${name}')">
+                            🖨️ عرض وطباعة الفاتورة (PDF)
+                        </button>
+                    </div>
                 </div>`;
             }
             document.getElementById("restsCardsGrid").innerHTML = html || "<p style='text-align:center; width:100%; color:red;'>لا توجد فواتير مطاعم في التاريخ المحدد.</p>";
         }
 
-        function downloadRestaurantInvoice(restName) {
+        // --- دالة إرسال البيانات للملف الجديد ---
+        function openInvoicePage(restName) {
             if (!window.globalData || !window.globalData.invoices) {
                 alert("البيانات غير مكتملة، يرجى الانتظار قليلاً والمحاولة مجدداً.");
                 return;
@@ -1238,7 +1237,6 @@
 
             const restOrders = window.globalData.invoices.filter(row => {
                 if (!row[1] || row[1].toString().trim() !== restName) return false;
-                
                 let rowDateStr = row[4] ? row[4].toString().split('T')[0] : "";
                 if (rowDateStr) {
                     let rowDate = new Date(rowDateStr);
@@ -1252,45 +1250,8 @@
                 return;
             }
 
-            let periodText = (startStr || endStr) ? `من ${startStr || 'بداية السجل'} إلى ${endStr || 'اليوم'}` : "جميع السجلات";
-
-            let pdfHtml = `
-                <style>
-                    .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
-                </style>
-                <div style="direction: rtl; font-family: 'Tajawal', sans-serif; padding: 20px; border: 5px solid #2c3e50; border-radius: 10px;">
-                    <div class="no-break" style="text-align: center; margin-bottom: 20px;">
-                        <img src="https://i.imgur.com/nYQiffV.png" crossorigin="anonymous" style="width: 90px; border-radius: 50%; border: 2px solid #D4AF37;">
-                        <h1 style="color: #D4AF37; margin: 10px 0 5px 0;">فريق نعاون لخدمات التوصيل</h1>
-                        <p style="margin: 0; font-weight: bold; font-size: 1.2rem; color: #2c3e50;">فاتورة مطعم تفصيلية</p>
-                    </div>
-                    
-                    <div class="no-break" style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
-                        <div>
-                            <p style="margin: 5px 0; font-size: 1.1rem;"><b>اسم الشريك (المطعم):</b> <span style="color:#e67e22;">${restName}</span></p>
-                        </div>
-                        <div style="text-align: left;">
-                            <p style="margin: 5px 0;"><b>تاريخ الإصدار:</b> ${new Date().toLocaleDateString('ar-OM')}</p>
-                            <p style="margin: 5px 0; color:#e74c3c;"><b>الفترة:</b> ${periodText}</p>
-                        </div>
-                    </div>
-
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: center; font-size: 13px;">
-                        <thead>
-                            <tr style="background-color: #2c3e50; color: white;">
-                                <th style="padding: 12px; border: 1px solid #ddd;">م</th>
-                                <th style="padding: 12px; border: 1px solid #ddd;">التاريخ</th>
-                                <th style="padding: 12px; border: 1px solid #ddd;">المندوب</th>
-                                <th style="padding: 12px; border: 1px solid #ddd;">تفاصيل الطلب</th>
-                                <th style="padding: 12px; border: 1px solid #ddd;">المكان</th>
-                                <th style="padding: 12px; border: 1px solid #ddd;">المبلغ</th>
-                            </tr>
-                        </thead>
-            `;
-
             let totalAmount = 0;
-
-            restOrders.forEach((row, index) => {
+            let ordersList = restOrders.map((row, index) => {
                 let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
                 let driver = row[2] || "---";
                 let loc = row[3] || "---";
@@ -1300,49 +1261,115 @@
                 rawPriceStr = rawPriceStr.replace(/,/g, '.');
                 let price = parseFloat(rawPriceStr);
                 if (rawPriceStr.includes('T') || isNaN(price)) price = 0;
-
-                pdfHtml += `
-                        <tbody class="no-break">
-                            <tr style="${index % 2 === 0 ? 'background-color: #f9f9f9;' : ''}">
-                                <td style="padding: 10px; border: 1px solid #ddd;">${index + 1}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;" dir="ltr">${dateStr}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${driver}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${details}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${loc}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #2ecc71;">${price.toFixed(3)}</td>
-                            </tr>
-                        </tbody>
-                `;
                 totalAmount += price;
+
+                return {
+                    index: index + 1,
+                    date: dateStr,
+                    driver: driver,
+                    details: details,
+                    location: loc,
+                    price: price.toFixed(3)
+                };
             });
 
-            pdfHtml += `
+            let periodText = (startStr || endStr) ? `من ${startStr || 'بداية السجل'} إلى ${endStr || 'اليوم'}` : "جميع السجلات";
+
+            // تجهيز حزمة البيانات
+            let invoiceData = {
+                restaurantName: restName,
+                period: periodText,
+                printDate: new Date().toLocaleDateString('ar-OM'),
+                ordersCount: restOrders.length,
+                total: totalAmount.toFixed(3),
+                orders: ordersList
+            };
+
+            // حفظ البيانات مؤقتاً في المتصفح ليقرأها ملف invoice.html
+            localStorage.setItem('printInvoiceData', JSON.stringify(invoiceData));
+            
+            // فتح صفحة الفاتورة الجديدة
+            window.open('invoice.html', '_blank');
+        }
+
+        // --- دالة التصدير إلى إكسل ---
+        function exportRestaurantExcel(restName) {
+            if (!window.globalData || !window.globalData.invoices) return;
+
+            let startStr = document.getElementById('adminFilterStart').value;
+            let endStr = document.getElementById('adminFilterEnd').value;
+            let startDate = startStr ? new Date(startStr) : new Date("2000-01-01");
+            let endDate = endStr ? new Date(endStr) : new Date("2100-01-01");
+            startDate.setHours(0,0,0,0);
+            endDate.setHours(23,59,59,999);
+
+            const restOrders = window.globalData.invoices.filter(row => {
+                if (!row[1] || row[1].toString().trim() !== restName) return false;
+                let rowDateStr = row[4] ? row[4].toString().split('T')[0] : "";
+                if (rowDateStr) {
+                    let rowDate = new Date(rowDateStr);
+                    if (rowDate < startDate || rowDate > endDate) return false;
+                }
+                return true;
+            });
+
+            if (restOrders.length === 0) {
+                alert("لا توجد طلبات مسجلة لهذا المطعم في التاريخ المحدد.");
+                return;
+            }
+
+            let periodText = (startStr || endStr) ? `من ${startStr || 'بداية السجل'} إلى ${endStr || 'اليوم'}` : "جميع السجلات";
+            let totalAmount = 0;
+
+            let tableRows = restOrders.map((row, index) => {
+                let dateStr = row[4] ? row[4].toString().split('T')[0] : "---";
+                let driver = row[2] || "---";
+                let loc = row[3] || "---";
+                let details = row[5] || "---";
+                let rawPriceStr = (row[8] !== undefined && row[8] !== "") ? row[8].toString() : (row[6] ? row[6].toString() : "0");
+                rawPriceStr = rawPriceStr.replace(/,/g, '.');
+                let price = parseFloat(rawPriceStr);
+                if (rawPriceStr.includes('T') || isNaN(price)) price = 0;
+                totalAmount += price;
+
+                return `<tr>
+                    <td>${index + 1}</td>
+                    <td dir="ltr">${dateStr}</td>
+                    <td>${driver}</td>
+                    <td>${details}</td>
+                    <td>${loc}</td>
+                    <td>${price.toFixed(3)}</td>
+                </tr>`;
+            }).join('');
+
+            let html = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body dir="rtl">
+                    <h2>فاتورة الشريك: ${restName}</h2>
+                    <p>الفترة: ${periodText}</p>
+                    <table border="1">
+                        <tr style="background-color:#2c3e50; color:white;">
+                            <th>م</th><th>التاريخ</th><th>المندوب</th><th>التفاصيل</th><th>المكان</th><th>المبلغ (ر.ع)</th>
+                        </tr>
+                        ${tableRows}
+                        <tr>
+                            <td colspan="5" style="text-align:left; font-weight:bold;">الإجمالي المستحق:</td>
+                            <td style="font-weight:bold; color:#27ae60;">${totalAmount.toFixed(3)}</td>
+                        </tr>
                     </table>
-
-                    <div class="no-break" style="background: #fdfaf0; padding: 20px; border-radius: 12px; text-align: left; direction: rtl; border: 1px solid #F4C430;">
-                        <p style="font-size: 1.1rem; margin: 0 0 10px 0;"><b>إجمالي عدد الطلبات:</b> <span style="color:#2c3e50; font-weight:bold;">${restOrders.length} طلبات</span></p>
-                        <div style="border-top: 2px dashed #D4AF37; margin: 10px 0;"></div>
-                        <h2 style="color: #27ae60; margin: 10px 0 0 0; font-size: 1.5rem;">
-                            الإجمالي المستحق للمطعم: ${totalAmount.toFixed(3)} ر.ع
-                        </h2>
-                    </div>
-
-                    <div class="no-break" style="margin-top: 40px; text-align: center; color: #7f8c8d; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px;">
-                        <p style="margin: 0;">صدرت هذه الفاتورة آلياً من النظام الإلكتروني لفريق نعاون</p>
-                        <p style="margin: 5px 0 0 0;">للتواصل والاستفسار يرجى مراجعة إدارة الفريق</p>
-                    </div>
-                </div>
+                </body>
+                </html>
             `;
 
-            const opt = {
-                margin: [15, 10, 15, 10],
-                filename: `فاتورة_نعاون_${restName}.pdf`,
-                image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 2, useCORS: true }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            html2pdf().from(pdfHtml).set(opt).save();
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `فاتورة_${restName}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function filterDrivers() {
@@ -1574,7 +1601,7 @@
                         </tr>
                         ${deductions.slice(1).map(row => `
                             <tr>
-                                <td>${row[0] || ""}</td><td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td>
+                                <td>${row[0] \vert{}\vert{} ""}</td><td>${row[1] || ""}</td><td>${row[2] \vert{}\vert{} ""}</td><td>${row[3] || ""}</td>
                                 <td>${row[4] || ""}</td><td style="color:red;">${parseFloat(row[7] || 0).toFixed(3)}</td><td style="color:green; font-weight:bold;">${parseFloat(row[8] || 0).toFixed(3)}</td>
                             </tr>
                         `).join('')}
@@ -1589,8 +1616,8 @@
                         </tr>
                         ${invoices.slice(1).map(row => `
                             <tr>
-                                <td>${row[1] || ""}</td><td>${row[2] || ""}</td><td>${row[3] || ""}</td><td>${row[4] || ""}</td>
-                                <td>${row[5] || ""}</td><td>${parseFloat(row[8] || 0).toFixed(3)}</td><td>${row[9] || "لا توجد"}</td>
+                                <td>${row[1] \vert{}\vert{} ""}</td><td>${row[2] || ""}</td><td>${row[3] \vert{}\vert{} ""}</td><td>${row[4] || ""}</td>
+                                <td>${row[5] || ""}</td><td>${parseFloat(row[8] \vert{}\vert{} 0).toFixed(3)}</td><td>${row[9] || "لا توجد"}</td>
                             </tr>
                         `).join('')}
                     </table>
