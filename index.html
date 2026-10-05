@@ -541,8 +541,10 @@
         async function fetchGoogleData() {
             let cachedData = localStorage.getItem('googleDataCache');
             if (cachedData) {
-                window.globalData = JSON.parse(cachedData);
-                populateRestaurantsDropdown();
+                try {
+                    window.globalData = JSON.parse(cachedData);
+                    populateRestaurantsDropdown();
+                } catch(e) {}
             }
 
             try {
@@ -554,7 +556,8 @@
                 console.error("خطأ في جلب البيانات:", error);
             }
         }
-        document.addEventListener('DOMContentLoaded', fetchGoogleData);
+        
+        window.addEventListener('load', fetchGoogleData);
         
         function showSection(id) {
             document.getElementById('mainMenu').style.display = 'none';
@@ -913,7 +916,8 @@
                 totalAmountSum += price;
 
                 let imgUrl = row[9] ? row[9].toString().trim() : "";
-                let imgBtn = imgUrl !== "" ? `<button onclick="showInvoiceImage('${imgUrl}')" style="background:var(--gold); color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-family:'Tajawal', sans-serif; font-size:12px; font-weight:bold;">🖼️ عرض</button>` : "<span style='color:#999; font-size:12px;'>بدون صورة</span>";
+                let safeUrl = imgUrl.replace(/'/g, "\\'");
+                let imgBtn = imgUrl !== "" ? `<button onclick="showInvoiceImage('${safeUrl}')" style="background:var(--gold); color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-family:'Tajawal', sans-serif; font-size:12px; font-weight:bold;">🖼️ عرض</button>` : "<span style='color:#999; font-size:12px;'>بدون صورة</span>";
 
                 html += `<tr>
                     <td>${row[2]}</td>
@@ -1095,6 +1099,8 @@
             let html = "";
             for (let name in drivers) {
                 let d = drivers[name];
+                let safeName = name.replace(/'/g, "\\'"); // تنظيف الأسماء من الفواصل
+                let safeNameAttr = name.replace(/"/g, '&quot;');
                 
                 let total = Math.round(d.total * 1000) / 1000;
                 let deds = Math.round(d.deds * 1000) / 1000;
@@ -1104,7 +1110,7 @@
                 globalTotalDeductions += deds; 
 
                 html += `
-                <div class="driver-card" data-name="${name}">
+                <div class="driver-card" data-name="${safeNameAttr}">
                     <div class="driver-name">👤 ${name}</div>
                     <div class="driver-stats">
                         <div class="stat-box"><span>الطلبات</span><strong>${d.count}</strong></div>
@@ -1115,8 +1121,8 @@
                         <span>صافي المندوب:</span> <strong class="text-primary">${net.toFixed(3)} ر.ع</strong>
                     </div>
                     <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <button class="main-btn" style="background:#f39c12; border-color:#e67e22; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="viewDriverImages('${name}')">🖼️ الصور</button>
-                        <button class="main-btn" style="background:#e74c3c; border-color:#c0392b; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="downloadDriverStatement('${name}')">📄 كشف حساب</button>
+                        <button class="main-btn" style="background:#f39c12; border-color:#e67e22; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="viewDriverImages('${safeName}')">🖼️ الصور</button>
+                        <button class="main-btn" style="background:#e74c3c; border-color:#c0392b; color:white; font-size:12px; padding:8px; flex:1; border-radius:10px;" onclick="downloadDriverStatement('${safeName}')">📄 كشف حساب</button>
                     </div>
                 </div>`;
             }
@@ -1201,6 +1207,7 @@
             let html = "";
             for (let name in rests) {
                 let r = rests[name];
+                let safeName = name.replace(/'/g, "\\'"); // حماية اسم المطعم
                 html += `
                 <div class="driver-card" style="border-top-color:#e67e22;">
                     <div class="driver-name">🍔 ${name}</div>
@@ -1209,10 +1216,10 @@
                         <span style="color:#e67e22;">الإجمالي: <strong>${r.total.toFixed(3)} ر.ع</strong></span>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="main-btn" style="background:#27ae60; border-color:#2ecc71; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="exportRestaurantExcel('${name}')">
+                        <button class="main-btn" style="background:#27ae60; border-color:#2ecc71; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="exportRestaurantExcel('${safeName}')">
                             📊 تصدير إكسل (Excel)
                         </button>
-                        <button class="main-btn" style="background:#2c3e50; border-color:#1a252f; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="openInvoicePage('${name}')">
+                        <button class="main-btn" style="background:#2c3e50; border-color:#1a252f; color:white; font-size:13px; padding:8px; border-radius:8px;" onclick="openInvoicePage('${safeName}')">
                             🖨️ عرض وطباعة الفاتورة (PDF)
                         </button>
                     </div>
@@ -1288,7 +1295,7 @@
             // حفظ البيانات مؤقتاً في المتصفح ليقرأها ملف invoice.html
             localStorage.setItem('printInvoiceData', JSON.stringify(invoiceData));
             
-            // فتح صفحة الفاتورة الجديدة
+            // فتح صفحة الفاتورة الجديدة (يجب التأكد من السماح بالنوافذ المنبثقة)
             window.open('invoice.html', '_blank');
         }
 
