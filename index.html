@@ -255,6 +255,30 @@
         .st-extra-hint { font-size:.75rem; color:#999; margin-top:8px; font-weight:600; }
         .extra-tag { display:inline-block; font-size:.72rem; font-weight:800; color:#8a6d0b; background:#fdf6dc; border:1px solid #ecd98f; padding:1px 8px; border-radius:999px; margin-top:6px; }
         .sg-kpi.hero .extra-tag { background:rgba(244,196,48,.15); color:#F4C430; border-color:rgba(244,196,48,.4); }
+        /* المصاريف: التسويق / احتياجات الفريق / الأنظمة */
+        .st-exp-row { display:grid; grid-template-columns:auto 1.4fr 1fr auto; gap:8px; align-items:center; padding:8px; border-radius:12px; background:#f8f9fb; border:1px solid #eef0f4; margin-bottom:8px; }
+        .st-exp-row.off { opacity:.6; }
+        .st-exp-row input[type=text], .st-exp-row input[type=number] { padding:9px 10px; border-radius:10px; font-weight:800; font-size:14px !important; }
+        .st-exp-row input[type=number] { direction:ltr; text-align:left; }
+        .st-exp-sw { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800; color:#333; cursor:pointer; white-space:nowrap; margin:0; }
+        .st-exp-sw input { width:18px; height:18px; accent-color:var(--gold); -webkit-appearance:auto; padding:0; }
+        .st-exp-del { border:none; background:#fdecea; color:#c0392b; width:34px; height:34px; border-radius:10px; cursor:pointer; font-weight:900; }
+        .st-exp-add { font-family:'Tajawal',sans-serif; font-weight:800; font-size:14px; border:1.5px dashed var(--gold); background:#fdf6dc; color:#8a6d0b; border-radius:12px; padding:8px 14px; cursor:pointer; width:100%; }
+        .sg-exp { background:#fff; border-radius:18px; padding:18px; margin-bottom:18px; box-shadow:0 4px 12px rgba(0,0,0,.05); text-align:right; border-top:4px solid #8e44ad; }
+        .sg-exp-title { font-weight:900; font-size:1.05rem; color:#1d2433; margin-bottom:12px; }
+        .sg-exp-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; }
+        .sg-exp-item { background:#f8f5fc; border:1px solid #ecdff5; border-radius:12px; padding:12px; }
+        .sg-exp-item .k { font-size:.82rem; font-weight:800; color:#6c3483; margin-bottom:6px; }
+        .sg-exp-item .v { font-size:1.25rem; font-weight:900; color:#1d2433; }
+        .sg-exp-item.total { background:linear-gradient(135deg,#6c3483,#8e44ad); border-color:#6c3483; }
+        .sg-exp-item.total .k, .sg-exp-item.total .v { color:#fff; }
+        @media (max-width: 640px) {
+            .st-exp-row { grid-template-columns:1fr 1fr; grid-template-areas:"sw del" "name amount"; }
+            .st-exp-row .st-exp-sw { grid-area:sw; }
+            .st-exp-row .st-exp-del { grid-area:del; justify-self:end; }
+            .st-exp-row [data-f=name] { grid-area:name; }
+            .st-exp-row [data-f=amount] { grid-area:amount; }
+        }
         .st-custom { display:flex; gap:8px; align-items:center; margin-top:10px; }
         .st-custom input { padding:7px 10px; font-size:14px !important; border-radius:10px; }
         .st-custom span { font-weight:700; color:#777; font-size:13px; }
@@ -577,6 +601,12 @@
                     <button type="button" class="st-chip" id="stExtraClear">🗑️ مسح</button>
                 </div>
                 <div class="st-extra-hint">تُضاف إلى الإجمالي العام فقط، وتُحفظ على هذا الجهاز لكل فترة على حدة.</div>
+            </div>
+            <div class="st-panel st-extra">
+                <div class="st-label">💼 مبالغ التسويق واحتياجات الفريق والأنظمة <span id="stExpScope" class="st-scope"></span></div>
+                <div id="stExpRows"></div>
+                <button type="button" class="st-exp-add" id="stExpAdd">＋ إضافة بند</button>
+                <div class="st-extra-hint">للعرض فقط (لا تغيّر أي رقم آخر). فعّل «إظهار» ليظهر البند في الإحصائيات والتقرير المطبوع. تُحفظ على هذا الجهاز لكل فترة.</div>
             </div>
         </div>
 
@@ -1624,7 +1654,8 @@
             ['driverOrders', 'طلبات كل كابتن'],
             ['driverMoney',  'مبالغ كل كابتن'],
             ['list',         'قائمة الكباتن'],
-            ['compare',      'المقارنة بالسابق']
+            ['compare',      'المقارنة بالسابق'],
+            ['expenses',     'التسويق والاحتياجات والأنظمة']
         ];
         let statsVis = {};
         STATS_VIS_ITEMS.forEach(([k]) => statsVis[k] = true);
@@ -1670,6 +1701,7 @@
                 }, 350);
             };
             ['stExtraOrders', 'stExtraRevenue'].forEach(id => document.getElementById(id).addEventListener('input', onExtraInput));
+            initExpenseControls();
             document.getElementById('stExtraClear').addEventListener('click', () => {
                 setStatsExtra(statsExtraKey(statsRange()), 0, 0);
                 document.getElementById('stExtraOrders').value = '';
@@ -1705,6 +1737,70 @@
             const v = readStatsExtraMap()[key] || {};
             return { o: Math.max(0, parseInt(v.o) || 0), r: Math.max(0, parseFloat(v.r) || 0) };
         }
+        // ================== مبالغ التسويق واحتياجات الفريق والأنظمة (للعرض فقط) ==================
+        const DEFAULT_EXPENSES = () => [
+            { name: 'التسويق', amount: 0, show: true },
+            { name: 'احتياجات الفريق', amount: 0, show: true },
+            { name: 'الأنظمة', amount: 0, show: true }
+        ];
+        let statsExpKey = null, statsExpenses = DEFAULT_EXPENSES();
+
+        function loadStatsExpenses(key) {
+            statsExpKey = key;
+            try {
+                const m = JSON.parse(localStorage.getItem('nwStatsExpenses') || '{}') || {};
+                statsExpenses = Array.isArray(m[key]) ? m[key] : DEFAULT_EXPENSES();
+            } catch (e) { statsExpenses = DEFAULT_EXPENSES(); }
+        }
+        function saveStatsExpenses() {
+            try {
+                const m = JSON.parse(localStorage.getItem('nwStatsExpenses') || '{}') || {};
+                m[statsExpKey] = statsExpenses;
+                localStorage.setItem('nwStatsExpenses', JSON.stringify(m));
+            } catch (e) {}
+        }
+        function visibleExpenses() {
+            return statsExpenses
+                .map(x => ({ name: (x.name || '').trim() || 'بند', amount: Math.max(0, +x.amount || 0), show: !!x.show }))
+                .filter(x => x.show && x.amount > 0);
+        }
+        function renderExpenseRows() {
+            document.getElementById('stExpRows').innerHTML = statsExpenses.map((x, i) => `
+                <div class="st-exp-row ${x.show ? '' : 'off'}" data-i="${i}">
+                    <label class="st-exp-sw"><input type="checkbox" data-f="show" ${x.show ? 'checked' : ''}>إظهار</label>
+                    <input type="text" data-f="name" value="${escHtml(x.name)}" placeholder="اسم البند">
+                    <input type="number" data-f="amount" min="0" step="0.001" inputmode="decimal" value="${+x.amount ? +x.amount : ''}" placeholder="0.000">
+                    <button type="button" class="st-exp-del" data-del title="حذف">✕</button>
+                </div>`).join('');
+        }
+        function initExpenseControls() {
+            let t = null;
+            const box = document.getElementById('stExpRows');
+            const onEdit = e => {
+                const row = e.target.closest('.st-exp-row'); if (!row) return;
+                const i = +row.dataset.i, f = e.target.dataset.f;
+                if (e.type === 'click') {
+                    if (!e.target.hasAttribute('data-del')) return;
+                    statsExpenses.splice(i, 1); saveStatsExpenses(); renderExpenseRows(); generateStatsReport(); return;
+                }
+                if (!f) return;
+                if (f === 'show') { statsExpenses[i].show = e.target.checked; row.classList.toggle('off', !e.target.checked); }
+                else if (f === 'amount') statsExpenses[i].amount = Math.max(0, parseFloat(String(e.target.value).replace(',', '.')) || 0);
+                else statsExpenses[i].name = e.target.value;
+                saveStatsExpenses();
+                clearTimeout(t); t = setTimeout(generateStatsReport, 300);
+            };
+            box.addEventListener('input', onEdit);
+            box.addEventListener('change', onEdit);
+            box.addEventListener('click', onEdit);
+            document.getElementById('stExpAdd').addEventListener('click', () => {
+                statsExpenses.push({ name: '', amount: 0, show: true });
+                saveStatsExpenses(); renderExpenseRows();
+                const rows = box.querySelectorAll('.st-exp-row');
+                rows[rows.length - 1].querySelector('[data-f=name]').focus();
+            });
+        }
+
         function setStatsExtra(key, o, r) {
             const m = readStatsExtraMap();
             if (o || r) m[key] = { o, r }; else delete m[key];
@@ -1899,6 +1995,12 @@
                 window._lastExtraKey = extraKey;
                 document.getElementById('stExtraScope').textContent = STATS_EXTRA_SCOPE[statsPeriod] || '';
             }
+            // 💼 مبالغ التسويق والاحتياجات والأنظمة لهذه الفترة
+            if (statsExpKey !== extraKey) { loadStatsExpenses(extraKey); renderExpenseRows(); }
+            document.getElementById('stExpScope').textContent = STATS_EXTRA_SCOPE[statsPeriod] || '';
+            const EXP = visibleExpenses();
+            const expTotal = EXP.reduce((s, x) => s + x.amount, 0);
+
             const extraOrdersTag = X.o ? `<div class="extra-tag">➕ يشمل ${X.o} طلب مدمج</div>` : '';
             const extraRevenueTag = X.r ? `<div class="extra-tag">➕ يشمل ${omrFmt.format(X.r)} ر.ع إضافي</div>` : '';
 
@@ -1944,6 +2046,7 @@
                     vis: Object.assign({}, V),
                     totals: { orders: T.orders, revenue: T.revenue, deds: T.deds, net, entries: T.entries, active: active.length, avg },
                     extra: { orders: X.o, revenue: X.r },
+                    expenses: V.expenses ? EXP : [],
                     top: { names: tops.map(d => d.name), orders: maxO },
                     low: { names: lows.map(d => d.name), orders: minO },
                     prev: hasP
@@ -2011,6 +2114,18 @@
                     </div>
                 </div>`;
             }
+            // ===== 💼 التسويق واحتياجات الفريق والأنظمة (للعرض فقط) =====
+            if (V.expenses && EXP.length) {
+                g += `
+                <div class="sg-exp">
+                    <div class="sg-exp-title">💼 مبالغ التسويق واحتياجات الفريق والأنظمة</div>
+                    <div class="sg-exp-grid">
+                        ${EXP.map(x => `<div class="sg-exp-item"><div class="k">${escHtml(x.name)}</div><div class="v">${omrMoney(x.amount)}</div></div>`).join('')}
+                        <div class="sg-exp-item total"><div class="k">الإجمالي</div><div class="v">${omrMoney(expTotal)}</div></div>
+                    </div>
+                </div>`;
+            }
+
             // ===== قسم المقارنة بالسابق =====
             if (V.compare && P && !hasP) {
                 g += `<div class="cmp-box"><div class="cmp-title">📊 المقارنة مع ${escHtml(P.label)}</div>

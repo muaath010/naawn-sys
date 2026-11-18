@@ -78,6 +78,15 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);-we
 .cmp-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
 .cmp-row .pv{font-size:11px;color:var(--muted);font-weight:700}
 .kpi.main .cmp-row .pv{color:#9fb0c8}
+.exp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.exp-item{background:#F8F5FC;border:1px solid #ECDFF5;border-radius:12px;padding:12px;break-inside:avoid;page-break-inside:avoid}
+.exp-item .k{font-size:12px;font-weight:800;color:#6C3483;margin-bottom:6px}
+.exp-item .v{font-size:18px;font-weight:900;color:var(--ink)}
+.exp-item.total{background:linear-gradient(135deg,#6C3483,#8E44AD);border-color:#6C3483}
+.exp-item.total .k,.exp-item.total .v{color:#fff}
+@media (max-width:720px){.exp-grid{grid-template-columns:1fr 1fr}}
+@media print{.exp-grid{grid-template-columns:repeat(4,1fr)!important}}
+.pdf-mode .exp-grid{grid-template-columns:repeat(4,1fr)}
 .extra-tag{display:inline-block;font-size:11px;font-weight:800;color:#8a6d0b;background:var(--gold-soft);border:1px solid var(--gold-line);padding:1px 8px;border-radius:999px;margin-top:6px}
 .kpi.main .extra-tag{background:rgba(230,198,92,.15);color:var(--gold-2);border-color:rgba(230,198,92,.4)}
 
@@ -243,6 +252,19 @@ function render(){
     </div>`;
   }
 
+  // ===== 💼 التسويق واحتياجات الفريق والأنظمة (للعرض فقط) =====
+  let expenses = '';
+  const EXP = (D.expenses || []).filter(x => x.amount > 0);
+  if (EXP.length){
+    const total = EXP.reduce((s, x) => s + x.amount, 0);
+    expenses = `
+      <div class="sec-title"><h3>💼 مبالغ التسويق واحتياجات الفريق والأنظمة</h3><span class="line"></span></div>
+      <div class="exp-grid">
+        ${EXP.map(x => `<div class="exp-item"><div class="k">${esc(x.name)}</div><div class="v">${money(x.amount)}</div></div>`).join('')}
+        <div class="exp-item total"><div class="k">الإجمالي</div><div class="v">${money(total)}</div></div>
+      </div>`;
+  }
+
   // ===== المقارنة =====
   let compare = '';
   if (on('compare') && D.prev){
@@ -333,6 +355,7 @@ function render(){
       </div>
       ${kpis ? `<div class="kpis">${kpis}</div>` : ''}
       ${podium}
+      ${expenses}
       ${compare}
       ${table}
     </div>
@@ -401,7 +424,7 @@ async function downloadPDF(){
     const area = document.getElementById('reportArea');
     area.querySelectorAll('svg.omr').forEach(s => s.setAttribute('fill', getComputedStyle(s).color));
     await buildPdf(area, `تقرير_أداء_الكباتن_${new Date().toISOString().slice(0,10)}.pdf`,
-      '.meta, .kpis, .podium, .sec-title, .note, tr, .movers, .foot').save();
+      '.meta, .kpis, .podium, .exp-grid, .sec-title, .note, tr, .movers, .foot').save();
     toast('تم تحميل التقرير ✅');
   } catch(e){
     toast('حدث خطأ أثناء إنشاء PDF');
