@@ -177,6 +177,41 @@ tr{page-break-inside:avoid;break-inside:avoid}
 .hide-qr .verify{grid-template-columns:1fr auto}
 .hide-notes .notes-wrap{display:none}
 
+/* ===== لوحة المبالغ الإضافية ===== */
+.chg-panel{max-width:210mm;margin:0 auto 18px;background:#fff;border-radius:18px;padding:18px 20px;border:1px solid var(--gold-line);
+  box-shadow:0 16px 40px -20px rgba(14,26,43,.35)}
+.chg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.chg-head h3{margin:0;font-size:17px;font-weight:900;color:var(--ink)}
+.chg-head p{margin:4px 0 0;font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.6}
+.chg-close{border:none;background:#F1F3F8;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;flex-shrink:0}
+.chg-prefill{font-size:12.5px;font-weight:700;color:#8a6d0b;background:var(--gold-soft);border:1px dashed var(--gold-line);padding:8px 12px;border-radius:10px;margin-bottom:10px}
+.chg-row{display:grid;grid-template-columns:auto 1.4fr 1fr 1.3fr auto;gap:8px;align-items:center;padding:8px;border-radius:12px;background:#F8F9FB;margin-bottom:8px;border:1px solid var(--line)}
+.chg-row.off{opacity:.62}
+.chg-row input[type=text],.chg-row input[type=number],.chg-row select{font-family:inherit;font-size:14px;font-weight:700;padding:9px 10px;border:1px solid #DDE1E8;border-radius:10px;background:#fff;width:100%;color:var(--ink);outline:none}
+.chg-row input:focus,.chg-row select:focus{border-color:var(--gold)}
+.chg-row input[type=number]{direction:ltr;text-align:left}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;user-select:none;white-space:nowrap}
+.sw input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer}
+.chg-del{border:none;background:var(--red-soft);color:var(--red);width:34px;height:34px;border-radius:10px;cursor:pointer;font-weight:900}
+.chg-add{font-family:inherit;font-weight:800;font-size:14px;border:1.5px dashed var(--gold);background:var(--gold-soft);color:#8a6d0b;border-radius:12px;padding:9px 14px;cursor:pointer;width:100%}
+.chg-sum{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted)}
+.chg-sum b{color:var(--ink)}
+.chg-sum .neg{color:var(--red)}
+.chg-sum .pos{color:var(--green)}
+/* بنود المبالغ داخل الفاتورة */
+.trow.chg{color:#fff}
+.trow.chg .sign-d{color:#F3A39A}
+.trow.chg .sign-a{color:#8FE0BE}
+.kpi.main .s{color:#9fb0c8}
+@media (max-width:720px){
+  .chg-row{grid-template-columns:1fr 1fr;grid-template-areas:"sw del" "name amount" "type type"}
+  .chg-row .sw{grid-area:sw}
+  .chg-row .chg-del{grid-area:del;justify-self:end}
+  .chg-row [data-f=name]{grid-area:name}
+  .chg-row [data-f=amount]{grid-area:amount}
+  .chg-row [data-f=type]{grid-area:type}
+}
+
 /* ===== الجوال ===== */
 @media (max-width:720px){
   .toolbar{position:static;padding:10px 8px}
@@ -248,6 +283,7 @@ tr{page-break-inside:avoid;break-inside:avoid}
     <button class="btn" id="pdfBtn" onclick="downloadPDF()">📥 تحميل PDF</button>
     <button class="btn wa" onclick="shareWhatsApp()">💬 واتساب</button>
     <button class="btn ghost" onclick="copySummary()">📋 نسخ الملخص</button>
+    <button class="btn ghost" id="chgToggleBtn" onclick="toggleChargesPanel()">💼 المبالغ الإضافية</button>
   </div>
   <span class="tb-sep"></span>
   <div class="tb-group" id="toggles">
@@ -260,6 +296,20 @@ tr{page-break-inside:avoid;break-inside:avoid}
 </div>
 
 <div class="stage" id="stage">
+  <!-- لوحة المبالغ الإضافية (لا تظهر في الطباعة) -->
+  <div class="chg-panel no-print" id="chgPanel" style="display:none">
+    <div class="chg-head">
+      <div>
+        <h3>💼 المبالغ الإضافية</h3>
+        <p>التسويق · احتياجات الفريق · الأنظمة — أو أي بند تضيفه. فعّل «إظهار» ليظهر البند في الفاتورة ويُحسب في إجماليها.</p>
+      </div>
+      <button class="chg-close" onclick="toggleChargesPanel(false)" aria-label="إغلاق">✕</button>
+    </div>
+    <div class="chg-prefill" id="chgPrefill" style="display:none">↺ تمت تعبئة البنود من آخر فاتورة لهذا المطعم — راجع المبالغ قبل الطباعة.</div>
+    <div class="chg-rows" id="chgRows"></div>
+    <button class="chg-add" onclick="addCharge()">＋ إضافة بند جديد</button>
+    <div class="chg-sum" id="chgSum"></div>
+  </div>
   <div id="root"></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -352,6 +402,106 @@ function compute(d){
     firstDate: dates[0], lastDate: dates[dates.length-1]};
 }
 
+/* ================= المبالغ الإضافية (تسويق / احتياجات الفريق / أنظمة) ================= */
+// تُحفظ لكل مطعم + فترة، وتُعبّأ تلقائياً من آخر فاتورة لنفس المطعم
+const DEFAULT_CHARGES = [
+  {name: 'التسويق',          amount: 0, type: 'deduct', show: true},
+  {name: 'احتياجات الفريق',  amount: 0, type: 'deduct', show: true},
+  {name: 'الأنظمة',          amount: 0, type: 'deduct', show: true}
+];
+const chgKey  = () => 'nwCharges|' + DATA.restaurantName + '|' + (DATA.periodStart || '') + '|' + (DATA.periodEnd || '');
+const chgLast = () => 'nwChargesLast|' + DATA.restaurantName;
+let CHARGES = [], chargesPrefilled = false;
+
+function loadCharges(){
+  CHARGES = JSON.parse(JSON.stringify(DEFAULT_CHARGES));
+  if (!DATA) return;
+  try {
+    const own = localStorage.getItem(chgKey());
+    if (own){ CHARGES = JSON.parse(own); return; }
+    const last = localStorage.getItem(chgLast());
+    if (last){
+      const arr = JSON.parse(last);
+      if (arr.some(c => +c.amount > 0)){ CHARGES = arr; chargesPrefilled = true; }
+    }
+  } catch(e){}
+}
+function saveCharges(){
+  try {
+    localStorage.setItem(chgKey(), JSON.stringify(CHARGES));
+    localStorage.setItem(chgLast(), JSON.stringify(CHARGES));
+  } catch(e){}
+}
+function calcCharges(subtotal){
+  const items = CHARGES.map(c => ({name: (c.name || 'بند').trim() || 'بند', amount: Math.max(0, +c.amount || 0), type: c.type === 'add' ? 'add' : 'deduct', show: !!c.show}))
+                       .filter(c => c.amount > 0);
+  const visible = items.filter(c => c.show), hidden = items.filter(c => !c.show);
+  const sum = (arr, t) => arr.filter(c => c.type === t).reduce((s, c) => s + c.amount, 0);
+  const ded = sum(visible, 'deduct'), add = sum(visible, 'add');
+  const grand = subtotal - ded + add;
+  const hiddenNet = sum(hidden, 'add') - sum(hidden, 'deduct');
+  return {visible, hidden, ded, add, grand, internal: grand + hiddenNet};
+}
+
+let chgTimer = null;
+function toggleChargesPanel(force){
+  const p = document.getElementById('chgPanel');
+  const open = force === undefined ? p.style.display === 'none' : force;
+  p.style.display = open ? '' : 'none';
+  if (open){ renderChargeRows(); p.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+}
+function renderChargeRows(){
+  document.getElementById('chgPrefill').style.display = chargesPrefilled ? '' : 'none';
+  document.getElementById('chgRows').innerHTML = CHARGES.map((c, i) => `
+    <div class="chg-row ${c.show ? '' : 'off'}" data-i="${i}">
+      <label class="sw"><input type="checkbox" data-f="show" ${c.show ? 'checked' : ''}>إظهار في الفاتورة</label>
+      <input type="text" data-f="name" value="${esc(c.name)}" placeholder="اسم البند">
+      <input type="number" data-f="amount" min="0" step="0.001" inputmode="decimal" value="${+c.amount ? +c.amount : ''}" placeholder="0.000">
+      <select data-f="type">
+        <option value="deduct" ${c.type !== 'add' ? 'selected' : ''}>➖ خصم من المستحق</option>
+        <option value="add" ${c.type === 'add' ? 'selected' : ''}>➕ إضافة على المستحق</option>
+      </select>
+      <button class="chg-del" data-del title="حذف البند">✕</button>
+    </div>`).join('');
+  renderChargeSum();
+}
+function renderChargeSum(){
+  if (!CALC) return;
+  const k = calcCharges(CALC.total);
+  const hiddenTotal = k.hidden.reduce((s, c) => s + c.amount, 0);
+  document.getElementById('chgSum').innerHTML = `
+    <span>إجمالي الطلبات: <b>${money(CALC.total)}</b></span>
+    <span>الخصومات الظاهرة: <b class="neg">${money(k.ded)}</b></span>
+    <span>الإضافات الظاهرة: <b class="pos">${money(k.add)}</b></span>
+    <span>المستحق في الفاتورة: <b>${money(k.grand)}</b></span>
+    ${k.hidden.length ? `<span>🙈 بنود مخفية (لا تظهر في الفاتورة): <b>${money(hiddenTotal)}</b> · الصافي الداخلي: <b>${money(k.internal)}</b></span>` : ''}`;
+}
+function addCharge(){
+  CHARGES.push({name: '', amount: 0, type: 'deduct', show: true});
+  saveCharges(); renderChargeRows();
+  const rows = document.querySelectorAll('#chgRows .chg-row');
+  rows[rows.length - 1].querySelector('[data-f=name]').focus();
+}
+function onChargeEdit(e){
+  const row = e.target.closest('.chg-row'); if (!row) return;
+  const i = +row.dataset.i, f = e.target.dataset.f;
+  if (e.target.hasAttribute('data-del')){
+    CHARGES.splice(i, 1); chargesPrefilled = false; saveCharges(); renderChargeRows(); render(); return;
+  }
+  if (!f) return;
+  chargesPrefilled = false;
+  document.getElementById('chgPrefill').style.display = 'none';
+  if (f === 'show'){ CHARGES[i].show = e.target.checked; row.classList.toggle('off', !e.target.checked); }
+  else if (f === 'amount'){ CHARGES[i].amount = Math.max(0, parseFloat(String(e.target.value).replace(',', '.')) || 0); }
+  else CHARGES[i][f] = e.target.value;
+  saveCharges();
+  clearTimeout(chgTimer);
+  chgTimer = setTimeout(() => { render(); renderChargeSum(); }, 250);
+}
+document.getElementById('chgRows').addEventListener('input', onChargeEdit);
+document.getElementById('chgRows').addEventListener('change', onChargeEdit);
+document.getElementById('chgRows').addEventListener('click', e => { if (e.target.hasAttribute('data-del')) onChargeEdit(e); });
+
 function periodText(){
   if (DATA.periodStart || DATA.periodEnd){
     return (DATA.periodStart ? prettyShort(DATA.periodStart) : 'بداية السجل') + ' ← ' + (DATA.periodEnd ? prettyShort(DATA.periodEnd) : 'اليوم');
@@ -406,8 +556,13 @@ function render(){
     return;
   }
   CALC = compute(DATA);
-  const c = CALC;
+  CALC.k = calcCharges(CALC.total);
+  const c = CALC, K = c.k;
   const cols = OPTS.group ? 5 : 6;
+  const due = K.grand, dueLabel = due >= 0 ? 'الإجمالي المستحق للمطعم' : 'المستحق على المطعم';
+  const hasChg = K.visible.length > 0;
+  const chgRows = K.visible.map(x => `<div class="trow chg"><span>${x.type === 'add' ? '<b class="sign-a">＋</b>' : '<b class="sign-d">－</b>'} ${esc(x.name)}</span>
+      <b class="${x.type === 'add' ? 'sign-a' : 'sign-d'}">${x.type === 'add' ? '+' : '−'} ${money(x.amount)}</b></div>`).join('');
 
   // صفوف الجدول
   let rows = '', i = 0;
@@ -465,7 +620,7 @@ function render(){
       </div>
 
       <div class="kpis">
-        <div class="kpi main"><div class="k">الإجمالي المستحق</div><div class="v">${money(c.total)}</div></div>
+        <div class="kpi main"><div class="k">${due >= 0 ? 'الإجمالي المستحق' : 'المستحق على المطعم'}</div><div class="v">${money(Math.abs(due))}</div>${hasChg ? '<div class="s">بعد المبالغ الإضافية</div>' : ''}</div>
         <div class="kpi"><div class="k">عدد الطلبات</div><div class="v num">${c.orders.length}</div><div class="s">خلال ${c.dayList.length} ${c.dayList.length === 1 ? 'يوم' : 'أيام'} عمل</div></div>
         <div class="kpi"><div class="k">متوسط قيمة الطلب</div><div class="v">${money(c.avg)}</div></div>
         <div class="kpi"><div class="k">أعلى يوم</div><div class="v" style="font-size:17px">${money(c.best ? c.best.sum : 0)}</div><div class="s">${c.best ? esc(prettyShort(c.best.date)) : '-'}</div></div>
@@ -489,9 +644,10 @@ function render(){
           <h4>💰 ملخص الحساب</h4>
           <div class="trow"><span>عدد الطلبات</span><b class="num">${c.orders.length}</b></div>
           <div class="trow"><span>عدد المناديب</span><b class="num">${c.driverList.length}</b></div>
-          <div class="trow"><span>المجموع الفرعي</span><b>${money(c.total)}</b></div>
-          <div class="grand"><div class="k">الإجمالي المستحق للمطعم</div><div class="v">${money(c.total)}</div></div>
-          <div class="words">${esc(amountInWords(c.total))}</div>
+          <div class="trow"><span>${hasChg ? 'إجمالي قيمة الطلبات' : 'المجموع الفرعي'}</span><b>${money(c.total)}</b></div>
+          ${chgRows}
+          <div class="grand"><div class="k">${dueLabel}</div><div class="v">${money(Math.abs(due))}</div></div>
+          <div class="words">${esc(amountInWords(Math.abs(due)))}</div>
         </div>
       </div>
 
@@ -540,7 +696,7 @@ function drawQR(){
     new QRCode(el, {text: utf8, width: 220, height: 220, colorDark: '#0E1A2B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L});
   } catch(e){
     el.innerHTML = '';
-    new QRCode(el, {text: CALC.invNo + ' | ' + fmt.format(CALC.total) + ' OMR', width: 220, height: 220, colorDark: '#0E1A2B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L});
+    new QRCode(el, {text: CALC.invNo + ' | ' + fmt.format(Math.abs(CALC.k.grand)) + ' OMR', width: 220, height: 220, colorDark: '#0E1A2B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L});
   }
 }
 
@@ -575,12 +731,17 @@ function summaryText(short){
     'رقم الفاتورة: ' + c.invNo,
     'المطعم: ' + DATA.restaurantName,
     'الفترة: ' + periodText(),
-    'عدد الطلبات: ' + c.orders.length,
-    'الإجمالي المستحق: ' + fmt.format(c.total) + ' ر.ع (OMR)',
-    'الحالة: ' + (isPaid() ? 'مدفوعة' : 'مستحقة الدفع')
+    'عدد الطلبات: ' + c.orders.length
   ];
+  const K = c.k || calcCharges(c.total);
+  if (K.visible.length){
+    lines.push('قيمة الطلبات: ' + fmt.format(c.total) + ' ر.ع');
+    K.visible.forEach(x => lines.push((x.type === 'add' ? '+ ' : '- ') + x.name + ': ' + fmt.format(x.amount) + ' ر.ع'));
+  }
+  lines.push((K.grand >= 0 ? 'الإجمالي المستحق: ' : 'المستحق على المطعم: ') + fmt.format(Math.abs(K.grand)) + ' ر.ع (OMR)');
+  lines.push('الحالة: ' + (isPaid() ? 'مدفوعة' : 'مستحقة الدفع'));
   if (!short){
-    lines.push('', amountInWords(c.total), '', 'شكراً لشراكتكم 🤝');
+    lines.push('', amountInWords(Math.abs(K.grand)), '', 'شكراً لشراكتكم 🤝');
   }
   return lines.join('\n');
 }
@@ -657,6 +818,7 @@ async function downloadPDF(){
   }
 }
 
+loadCharges();
 render();
 </script>
 </body>
