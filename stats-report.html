@@ -78,6 +78,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);-we
 .cmp-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
 .cmp-row .pv{font-size:11px;color:var(--muted);font-weight:700}
 .kpi.main .cmp-row .pv{color:#9fb0c8}
+.extra-tag{display:inline-block;font-size:11px;font-weight:800;color:#8a6d0b;background:var(--gold-soft);border:1px solid var(--gold-line);padding:1px 8px;border-radius:999px;margin-top:6px}
+.kpi.main .extra-tag{background:rgba(230,198,92,.15);color:var(--gold-2);border-color:rgba(230,198,92,.4)}
 
 .podium{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
 .pod{border-radius:14px;padding:14px 16px;break-inside:avoid;page-break-inside:avoid}
@@ -210,6 +212,7 @@ function render(){
     return;
   }
   const V = D.vis || {}, T = D.totals, P = (D.prev && !D.prev.empty) ? D.prev : null;
+  const EX = D.extra || {orders: 0, revenue: 0};
   const on = k => V[k] !== false;
   const issued = new Date(D.issuedAt || Date.now()).toLocaleDateString('ar-OM-u-nu-latn', {day:'numeric', month:'long', year:'numeric'});
   const cmpLine = (cur, prev, prevTxt, upGood = true, isMoney = false) =>
@@ -218,8 +221,9 @@ function render(){
   // ===== المؤشرات =====
   let kpis = '';
   if (on('totalOrders')) kpis += `<div class="kpi main"><div class="k">📦 إجمالي الطلبات</div><div class="v num">${T.orders.toLocaleString('en-US')}</div>
-      <div class="s">من ${T.entries} عملية تسجيل</div>${cmpLine(T.orders, P && P.orders, P ? P.orders.toLocaleString('en-US') : '')}</div>`;
+      <div class="s">من ${T.entries} عملية تسجيل</div>${EX.orders ? `<div class="extra-tag">➕ يشمل ${EX.orders} طلب مدمج</div>` : ''}${cmpLine(T.orders, P && P.orders, P ? P.orders.toLocaleString('en-US') : '')}</div>`;
   if (on('revenue')) kpis += `<div class="kpi" style="--accent:#27ae60"><div class="k">💰 إجمالي المحصّل من الطلبات</div><div class="v" style="color:#1e8f4e">${money(T.revenue)}</div>
+      ${EX.revenue ? `<div class="extra-tag">➕ يشمل ${fmt.format(EX.revenue)} ر.ع إضافي</div>` : ''}
       ${cmpLine(T.revenue, P && P.revenue, P ? money(P.revenue) : '', true, true)}</div>`;
   if (on('deductions')) kpis += `<div class="kpi" style="--accent:#e74c3c"><div class="k">📉 إجمالي الاستقطاع</div><div class="v" style="color:#c0392b">${money(T.deds)}</div>
       ${cmpLine(T.deds, P && P.deds, P ? money(P.deds) : '', false, true)}</div>
