@@ -1,260 +1,626 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فاتورة المتجر - فريق نعاون</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gold: #D4AF37;
-            --dark: #2c3e50;
-        }
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #f4f7fe;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        .invoice-container {
-            max-width: 210mm; /* عرض ورقة A4 */
-            min-height: 297mm; /* طول ورقة A4 */
-            margin: auto;
-            background: #fff;
-            padding: 20mm;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-            border-top: 10px solid var(--dark);
-            border-bottom: 10px solid var(--gold);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        .header-logo {
-            text-align: center;
-        }
-        .header-logo img {
-            width: 100px;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-        }
-        .header-logo h1 {
-            color: var(--gold);
-            margin: 10px 0 0;
-            font-size: 1.5rem;
-        }
-        .header-info h2 {
-            margin: 0 0 10px;
-            color: var(--dark);
-            font-size: 1.8rem;
-        }
-        .header-info p {
-            margin: 5px 0;
-            font-size: 1.1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: var(--dark);
-            color: #fff;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .summary-box {
-            background: #fdfaf0;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--gold);
-            text-align: left;
-            direction: rtl;
-        }
-        .summary-box p {
-            font-size: 1.2rem;
-            margin: 0 0 10px;
-            color: var(--dark);
-        }
-        .summary-box h3 {
-            font-size: 1.8rem;
-            color: #27ae60;
-            margin: 10px 0 0;
-            border-top: 2px dashed var(--gold);
-            padding-top: 10px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 13px;
-            color: #777;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
-        
-        /* أزرار الطباعة */
-        .print-actions {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .print-btn {
-            background: var(--dark);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.2rem;
-            font-family: 'Tajawal', sans-serif;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: 0.3s;
-        }
-        .print-btn:hover {
-            background: var(--gold);
-            transform: translateY(-2px);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E1A2B">
+<title>فاتورة شريك - فريق نعاون</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --ink:#0E1A2B; --ink-2:#1B2A41; --ink-3:#2A3B57;
+  --gold:#C9A227; --gold-2:#E6C65C; --gold-soft:#FBF6E6; --gold-line:#EADFB8;
+  --paper:#FFFFFF; --bg:#EEF1F6; --text:#1F2937; --muted:#6B7280; --line:#ECEEF2;
+  --green:#0F8A5F; --green-soft:#E7F6EF; --red:#C0392B; --red-soft:#FCECEA;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
 
-        /* الإعدادات السحرية للطباعة (تمنع القص نهائياً) */
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 10mm;
-            }
-            body {
-                background: none;
-                padding: 0;
-            }
-            .invoice-container {
-                box-shadow: none;
-                border: none;
-                padding: 0;
-                width: 100%;
-                max-width: none;
-                margin: 0;
-            }
-            /* إخفاء أزرار الطباعة عند سحب الفاتورة */
-            .print-actions {
-                display: none !important;
-            }
-            /* تكرار رأس الجدول في كل صفحة جديدة */
-            thead {
-                display: table-header-group; 
-            }
-            /* منع انقسام السطر الواحد بين صفحتين */
-            tr {
-                page-break-inside: avoid; 
-            }
-            td, th {
-                page-break-inside: avoid;
-            }
-        }
-    </style>
+/* ===== رمز الريال العماني الجديد ===== */
+.omr{display:inline-block;width:1.25em;height:.72em;vertical-align:-.04em;fill:currentColor}
+.money{display:inline-flex;align-items:baseline;gap:.28em;direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ===== شريط الأدوات ===== */
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(14,26,43,.96);backdrop-filter:blur(8px);color:#fff;
+  padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.tb-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tb-sep{width:1px;height:26px;background:rgba(255,255,255,.18);margin:0 4px}
+.btn{font-family:inherit;font-weight:700;font-size:14px;border:none;border-radius:999px;padding:9px 16px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;transition:transform .15s,background .2s,opacity .2s;color:var(--ink);background:#fff}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:var(--ink)}
+.btn.wa{background:#25D366;color:#fff}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.25)}
+.chip{font-family:inherit;font-size:13px;font-weight:700;border-radius:999px;padding:7px 12px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.25);background:transparent;color:#cfd6e2;display:inline-flex;align-items:center;gap:6px}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25)}
+.chip.on{background:rgba(201,162,39,.16);border-color:var(--gold);color:#fff}
+.chip.on .dot{background:var(--gold-2)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:.3s;z-index:99;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== الورقة ===== */
+.stage{padding:28px 16px 60px}
+.sheet{width:100%;max-width:210mm;margin:0 auto;background:var(--paper);border-radius:18px;overflow:hidden;position:relative;
+  box-shadow:0 30px 60px -20px rgba(14,26,43,.35),0 0 0 1px rgba(14,26,43,.04)}
+
+/* الرأس */
+.hero{position:relative;background:radial-gradient(120% 140% at 0% 0%,var(--ink-3) 0%,var(--ink) 55%);color:#fff;padding:30px 34px 26px;overflow:hidden}
+.hero-pattern{position:absolute;inset:0;opacity:.13;pointer-events:none}
+.hero-row{position:relative;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:72px;height:72px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--gold),var(--gold-2));flex-shrink:0}
+.brand-logo img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#fff}
+.brand h1{margin:0;font-size:26px;font-weight:900;letter-spacing:-.2px}
+.brand p{margin:3px 0 0;color:var(--gold-2);font-weight:700;font-size:14px}
+.title-block{text-align:left}
+.title-block .t-ar{font-size:44px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.title-block .t-en{font-size:11px;letter-spacing:4px;color:#9fb0c8;margin-top:6px;font-weight:700}
+.inv-no{display:inline-block;margin-top:10px;font-size:13px;font-weight:800;padding:5px 12px;border-radius:999px;border:1px solid rgba(230,198,92,.5);color:var(--gold-2);direction:ltr}
+.gold-rule{height:4px;background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--gold))}
+
+.body{padding:26px 34px 10px}
+
+/* بيانات الفاتورة */
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.meta .cell{background:#F8F9FB;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.meta .k{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.meta .v{font-size:14px;font-weight:800;color:var(--ink)}
+.status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:800}
+.status.due{background:var(--red-soft);color:var(--red)}
+.status.paid{background:var(--green-soft);color:var(--green)}
+.status i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+
+/* الأطراف */
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.party{border-radius:14px;padding:14px 16px;border:1px solid var(--line);position:relative}
+.party.to{background:var(--gold-soft);border-color:var(--gold-line)}
+.party .lbl{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:var(--muted);margin-bottom:6px}
+.party .name{font-size:19px;font-weight:900;color:var(--ink)}
+.party .sub{font-size:12.5px;color:var(--muted);margin-top:3px;font-weight:500}
+
+/* المؤشرات */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.kpi{border-radius:14px;padding:14px;border:1px solid var(--line);background:#fff;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--gold)}
+.kpi.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.kpi.main .k{color:#9fb0c8}
+.kpi .k{font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:6px}
+.kpi .v{font-size:21px;font-weight:900;line-height:1.1}
+.kpi .s{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
+.kpi.main .v{color:var(--gold-2)}
+
+/* الجدول */
+.sec-title{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
+.sec-title h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+.sec-title .line{flex:1;height:1px;background:var(--line)}
+.sec-title .badge{font-size:12px;font-weight:800;color:var(--gold);background:var(--gold-soft);padding:3px 10px;border-radius:999px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--ink);color:#fff;font-weight:800;padding:11px 10px;text-align:right;font-size:12.5px;white-space:nowrap}
+thead th:last-child{text-align:left}
+tbody td{padding:10px;border-top:1px solid var(--line);vertical-align:top}
+tbody tr.order:nth-child(even) td{background:#FAFBFC}
+td.idx{color:var(--muted);font-weight:700;width:36px;text-align:center}
+td.amt{text-align:left;font-weight:900;color:var(--ink);white-space:nowrap}
+td.det{max-width:220px;line-height:1.5}
+.drv{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.av{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0}
+.rcpt{font-size:11px;color:var(--gold);text-decoration:none;font-weight:800;margin-inline-start:4px}
+tr.day td{background:linear-gradient(90deg,var(--gold-soft),#fff)!important;font-weight:900;color:var(--ink);padding:8px 10px;border-top:1px solid var(--gold-line)}
+tr.day .dmeta{color:var(--muted);font-weight:700;font-size:12px;margin-inline-start:8px}
+tr.day td:last-child{text-align:left}
+thead{display:table-header-group}
+tr{page-break-inside:avoid;break-inside:avoid}
+
+/* أسفل الجدول */
+.bottom{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-top:22px;align-items:start}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px;break-inside:avoid;page-break-inside:avoid}
+.card h4{margin:0 0 12px;font-size:14.5px;font-weight:900;color:var(--ink)}
+.drow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.drow:last-child{margin-bottom:0}
+.drow .nm{font-weight:800;display:flex;align-items:center;gap:6px}
+.drow .cnt{font-size:11.5px;color:var(--muted);font-weight:700}
+.bar{height:8px;border-radius:99px;background:#EEF0F4;overflow:hidden}
+.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-2))}
+.drow .val{font-weight:900;font-size:12.5px}
+
+.totals{background:var(--ink);color:#fff;border-color:var(--ink);position:relative;overflow:hidden}
+.totals h4{color:#fff}
+.trow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.14);font-size:13.5px;color:#cfd6e2;font-weight:600}
+.trow b{color:#fff}
+.grand{margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:var(--ink)}
+.grand .k{font-size:12.5px;font-weight:900;opacity:.8}
+.grand .v{font-size:30px;font-weight:900;line-height:1.15;margin-top:2px}
+.words{margin-top:10px;font-size:12.5px;line-height:1.7;color:#E6C65C;font-weight:700}
+
+/* التحقق والتوقيع */
+.verify{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;margin-top:18px;padding:16px;border:1px dashed var(--gold-line);border-radius:14px;background:#FFFDF7;break-inside:avoid;page-break-inside:avoid}
+.qr{width:104px;height:104px;padding:6px;background:#fff;border-radius:10px;border:1px solid var(--line)}
+.qr img,.qr canvas{width:100%!important;height:100%!important;display:block}
+.verify .txt h5{margin:0 0 6px;font-size:14px;font-weight:900;color:var(--ink)}
+.verify .txt p{margin:0;font-size:12px;color:var(--muted);line-height:1.7}
+.sign{text-align:center;min-width:170px}
+.sign .line{border-top:1.5px solid var(--ink);margin-top:6px;padding-top:6px;font-size:12px;font-weight:800;color:var(--muted)}
+.seal{display:flex;justify-content:center;transform:rotate(-10deg);opacity:.92}
+
+.notes{margin-top:16px;border-radius:12px;padding:12px 14px;background:#F8F9FB;border:1px solid var(--line);font-size:13px;line-height:1.7;min-height:44px;outline:none}
+.notes:empty::before{content:attr(data-ph);color:#aab1bd}
+.notes-lbl{font-size:12px;font-weight:900;color:var(--ink);margin:16px 0 6px}
+
+.foot{margin-top:22px;background:var(--ink);color:#9fb0c8;padding:16px 34px;display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:12px;flex-wrap:wrap}
+.foot b{color:var(--gold-2)}
+
+/* ختم "مدفوعة" */
+.paid-stamp{position:absolute;top:210px;left:40px;transform:rotate(-16deg);border:4px solid var(--green);color:var(--green);
+  border-radius:14px;padding:6px 18px;font-size:30px;font-weight:900;letter-spacing:2px;opacity:.85;display:none;background:rgba(255,255,255,.6);z-index:5}
+.paid-stamp small{display:block;font-size:11px;letter-spacing:3px;text-align:center}
+.sheet.is-paid .paid-stamp{display:block}
+
+/* الحالة الفارغة */
+.empty{max-width:520px;margin:80px auto;text-align:center;background:#fff;border-radius:18px;padding:40px 30px;box-shadow:0 20px 50px -20px rgba(0,0,0,.25)}
+.empty h2{margin:10px 0;color:var(--ink)}
+.empty p{color:var(--muted);line-height:1.8}
+
+/* الإخفاء حسب الخيارات */
+.hide-drivers .drivers-card{display:none}
+.hide-drivers .bottom{grid-template-columns:1fr}
+.hide-qr .qr{display:none}
+.hide-qr .verify{grid-template-columns:1fr auto}
+.hide-notes .notes-wrap{display:none}
+
+/* ===== الجوال ===== */
+@media (max-width:720px){
+  .toolbar{position:static;padding:10px 8px}
+  .tb-sep{display:none}
+  .btn{padding:8px 12px;font-size:13px}
+  .chip{padding:6px 10px;font-size:12px}
+  .stage{padding:14px 8px 40px}
+  .hero{padding:22px 18px}
+  .hero-row{flex-direction:column;align-items:flex-start}
+  .title-block{text-align:right}
+  .title-block .t-ar{font-size:36px}
+  .body{padding:18px 16px 6px}
+  .meta,.kpis{grid-template-columns:repeat(2,1fr)}
+  .parties,.bottom{grid-template-columns:1fr}
+  .verify{grid-template-columns:1fr;text-align:center}
+  .qr{margin:0 auto}
+  .foot{padding:14px 16px}
+  .paid-stamp{top:150px;left:16px;font-size:22px}
+}
+
+/* ===== وضع تصدير PDF (عرض A4 ثابت) ===== */
+.pdf-mode .sheet{width:794px;max-width:794px;border-radius:0;box-shadow:none}
+.pdf-mode .meta,.pdf-mode .kpis{grid-template-columns:repeat(4,1fr)}
+.pdf-mode .parties{grid-template-columns:1fr 1fr}
+.pdf-mode .bottom{grid-template-columns:1.1fr 1fr}
+.pdf-mode.hide-drivers .bottom{grid-template-columns:1fr}
+.pdf-mode .hero-row{flex-direction:row;align-items:center}
+.pdf-mode .title-block{text-align:left}
+.pdf-mode .verify{grid-template-columns:auto 1fr auto;text-align:right}
+.pdf-mode.hide-qr .verify{grid-template-columns:1fr auto}
+.pdf-mode .table-wrap{overflow:visible}
+.pdf-mode .no-print{display:none!important}
+.pdf-mode .notes:empty{display:none}
+
+/* ===== الطباعة ===== */
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  body{background:#fff}
+  .toolbar,.no-print,.toast{display:none!important}
+  .stage{padding:0}
+  .sheet{max-width:none;width:100%;border-radius:0;box-shadow:none}
+  .meta,.kpis{grid-template-columns:repeat(4,1fr)!important}
+  .parties{grid-template-columns:1fr 1fr!important}
+  .bottom{grid-template-columns:1.1fr 1fr!important}
+  .hide-drivers .bottom{grid-template-columns:1fr!important}
+  .hero-row{flex-direction:row!important;align-items:center!important}
+  .title-block{text-align:left!important}
+  .verify{grid-template-columns:auto 1fr auto!important;text-align:right!important}
+  .hide-qr .verify{grid-template-columns:1fr auto!important}
+  .table-wrap{overflow:visible;border-radius:0}
+  .notes:empty{display:none}
+  .paid-stamp{top:200px}
+}
+</style>
 </head>
 <body>
 
-    <div class="print-actions">
-        <button class="print-btn" onclick="window.print()">🖨️ طباعة أو حفظ كـ PDF</button>
-        <p style="font-size: 13px; color: #666; margin-top: 10px;">لأفضل نتيجة إلكترونية: اختر الوجهة "حفظ بتنسيق PDF" من نافذة الطباعة</p>
-    </div>
+<!-- رمز الريال العماني الرسمي (البنك المركزي العُماني 2025 - U+20C4) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="omr-sign" viewBox="0 0 741.36 415.06">
+    <path d="M259.9,219.89c-.63-49.2,11.44-95.41,35.76-137.75C331.7,19.4,371.24-.36,439.78,34.99c10.67,5.5,53.6,35.43,57.81,44.54,5.03,10.87-27.48,103.87-29.11,122.3-34.69-37.51-99.37-98.66-154.85-69.62-45.05,23.58-12.02,62.54,11.46,87.68h406.25l-39.14,70.23-289.2-2c-1.11,4.66.87,3.3,2.53,4.6,12.44,9.72,80.97,31.54,94.75,31.54l172.05,1.99-39.49,71.25H10.03l39.24-71.24h272.14l-37.11-36.13H69.33l39.23-70.23h151.33Z"/>
+  </symbol>
+</svg>
 
-    <div class="invoice-container" id="invoiceArea">
-        <div class="header">
-            <div class="header-info">
-                <h2>فاتورة تفصيلية لشركاء التوصيل</h2>
-                <p><b>اسم الشريك (المطعم):</b> <span id="valRestName" style="color: #e67e22; font-weight: bold;">جاري التحميل...</span></p>
-                <p><b>تاريخ الإصدار:</b> <span id="valPrintDate"></span></p>
-                <p><b>الفترة المحددة:</b> <span id="valPeriod" style="color: #e74c3c;"></span></p>
-            </div>
-            <div class="header-logo">
-                <img src="https://i.imgur.com/nYQiffV.png" alt="شعار فريق نعاون" crossorigin="anonymous">
-                <h1>فريق نعاون</h1>
-            </div>
+<div class="toolbar" id="toolbar">
+  <div class="tb-group">
+    <button class="btn gold" onclick="doPrint()">🖨️ طباعة</button>
+    <button class="btn" id="pdfBtn" onclick="downloadPDF()">📥 تحميل PDF</button>
+    <button class="btn wa" onclick="shareWhatsApp()">💬 واتساب</button>
+    <button class="btn ghost" onclick="copySummary()">📋 نسخ الملخص</button>
+  </div>
+  <span class="tb-sep"></span>
+  <div class="tb-group" id="toggles">
+    <button class="chip" data-opt="group"><span class="dot"></span>تجميع حسب اليوم</button>
+    <button class="chip" data-opt="drivers"><span class="dot"></span>ملخص المناديب</button>
+    <button class="chip" data-opt="qr"><span class="dot"></span>رمز QR</button>
+    <button class="chip" data-opt="notes"><span class="dot"></span>ملاحظات</button>
+    <button class="chip" data-opt="paid"><span class="dot"></span>مدفوعة ✓</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div id="root"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= أدوات مساعدة ================= */
+const LOGO = "https://i.imgur.com/nYQiffV.png";
+// نضع المسار كاملاً داخل كل رمز (وليس <use>) حتى يظهر بشكل صحيح داخل ملفات PDF
+const OMR = '<svg class="omr" viewBox="0 0 741.36 415.06" role="img" aria-label="ريال عماني"><path d="'
+  + document.querySelector('#omr-sign path').getAttribute('d') + '"/></svg>';
+const fmt = new Intl.NumberFormat('en-US', {minimumFractionDigits:3, maximumFractionDigits:3});
+const money = n => `<span class="money">${OMR}<span>${fmt.format(n)}</span></span>`;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AV_COLORS = ['#C9A227','#0F8A5F','#2563EB','#9333EA','#DB2777','#EA580C','#0891B2','#4F46E5','#65A30D','#B91C1C'];
+const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h; };
+const avColor = name => AV_COLORS[hash(name) % AV_COLORS.length];
+const initial = name => (String(name).trim().charAt(0) || '؟');
+
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2200); }
+
+function parseDay(d){
+  if (!d || d === '---') return null;
+  const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2]-1, +m[3]);
+}
+const dayFmt = new Intl.DateTimeFormat('ar-OM-u-nu-latn', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const shortFmt = new Intl.DateTimeFormat('ar-OM-u-nu-latn', {day:'numeric', month:'long', year:'numeric'});
+const prettyDay = d => { const x = parseDay(d); return x ? dayFmt.format(x) : (d || 'بدون تاريخ'); };
+const prettyShort = d => { const x = parseDay(d); return x ? shortFmt.format(x) : d; };
+
+/* ================= تفقيط المبلغ بالعربية ================= */
+function arWords(n){
+  n = Math.floor(n);
+  if (n === 0) return 'صفر';
+  const ones = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const tens = ['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+  const hundreds = ['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+  const below100 = x => x < 20 ? ones[x] : (x % 10 ? ones[x%10] + ' و' + tens[Math.floor(x/10)] : tens[Math.floor(x/10)]);
+  const below1000 = x => { const h = Math.floor(x/100), r = x % 100; return [hundreds[h], r ? below100(r) : ''].filter(Boolean).join(' و'); };
+  const scale = (x, one, two, few, many) => {
+    if (x === 1) return one; if (x === 2) return two;
+    if (x >= 3 && x <= 10) return below1000(x) + ' ' + few;
+    return below1000(x) + ' ' + many;
+  };
+  const parts = [];
+  const mil = Math.floor(n / 1e6), th = Math.floor((n % 1e6) / 1000), rest = n % 1000;
+  if (mil) parts.push(scale(mil, 'مليون', 'مليونان', 'ملايين', 'مليون'));
+  if (th) parts.push(scale(th, 'ألف', 'ألفان', 'آلاف', 'ألف'));
+  if (rest) parts.push(below1000(rest));
+  return parts.join(' و');
+}
+function amountInWords(total){
+  const rials = Math.floor(total + 1e-9);
+  const baisa = Math.round((total - rials) * 1000);
+  let s = 'فقط ' + arWords(rials) + ' ريال عُماني';
+  if (baisa > 0) s += ' و' + arWords(baisa) + ' بيسة';
+  return s + ' لا غير';
+}
+
+/* ================= الخيارات (تُحفظ في المتصفح) ================= */
+const DEFAULT_OPTS = {group:true, drivers:true, qr:true, notes:false};
+let OPTS = Object.assign({}, DEFAULT_OPTS);
+try { Object.assign(OPTS, JSON.parse(localStorage.getItem('nwInvoiceOpts') || '{}')); } catch(e){}
+function saveOpts(){ try { localStorage.setItem('nwInvoiceOpts', JSON.stringify(OPTS)); } catch(e){} }
+
+/* ================= البيانات ================= */
+let DATA = null, CALC = null;
+try { DATA = JSON.parse(localStorage.getItem('printInvoiceData') || 'null'); } catch(e){ DATA = null; }
+
+function compute(d){
+  const orders = (d.orders || []).map(o => Object.assign({}, o, {amount: parseFloat(o.price) || 0}));
+  const total = orders.reduce((s,o) => s + o.amount, 0);
+  const days = {}, drivers = {};
+  orders.forEach(o => {
+    const k = o.date || '---';
+    (days[k] = days[k] || {date:k, list:[], sum:0}).list.push(o); days[k].sum += o.amount;
+    const dn = (o.driver || '---').toString().trim();
+    (drivers[dn] = drivers[dn] || {name:dn, count:0, sum:0}); drivers[dn].count++; drivers[dn].sum += o.amount;
+  });
+  const dayList = Object.values(days).sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  const driverList = Object.values(drivers).sort((a,b) => b.sum - a.sum);
+  const best = dayList.slice().sort((a,b) => b.sum - a.sum)[0];
+  const dates = dayList.map(x => x.date).filter(x => parseDay(x));
+  const seed = [d.restaurantName, d.periodStart || dates[0] || '', d.periodEnd || dates[dates.length-1] || '', orders.length, total.toFixed(3)].join('|');
+  const issued = d.issuedAt ? new Date(d.issuedAt) : new Date();
+  const invNo = 'NW-' + String(issued.getFullYear()).slice(2) + String(issued.getMonth()+1).padStart(2,'0') + '-' + hash(seed).toString(36).toUpperCase().padStart(6,'0').slice(-6);
+  return {orders, total, dayList, driverList, best, invNo, issued,
+    avg: orders.length ? total / orders.length : 0,
+    firstDate: dates[0], lastDate: dates[dates.length-1]};
+}
+
+function periodText(){
+  if (DATA.periodStart || DATA.periodEnd){
+    return (DATA.periodStart ? prettyShort(DATA.periodStart) : 'بداية السجل') + ' ← ' + (DATA.periodEnd ? prettyShort(DATA.periodEnd) : 'اليوم');
+  }
+  if (CALC.firstDate) return prettyShort(CALC.firstDate) + ' ← ' + prettyShort(CALC.lastDate);
+  return DATA.period || 'جميع السجلات';
+}
+
+const isPaid = () => { try { return localStorage.getItem('nwPaid_' + CALC.invNo) === '1'; } catch(e){ return false; } };
+
+/* ================= البناء ================= */
+function heroPattern(){
+  return `<svg class="hero-pattern" width="100%" height="100%" aria-hidden="true">
+    <defs><pattern id="pt" width="38" height="38" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect x="0" y="0" width="38" height="38" fill="none" stroke="#E6C65C" stroke-width="1"/>
+      <circle cx="19" cy="19" r="4" fill="none" stroke="#E6C65C" stroke-width="1"/>
+    </pattern></defs>
+    <rect width="100%" height="100%" fill="url(#pt)"/></svg>`;
+}
+
+function sealSvg(){
+  return `<svg width="96" height="96" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="56" fill="none" stroke="#1B2A41" stroke-width="3"/>
+    <circle cx="60" cy="60" r="49" fill="none" stroke="#1B2A41" stroke-width="1" stroke-dasharray="3 3"/>
+    <circle cx="60" cy="60" r="40" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+    <text x="60" y="36" text-anchor="middle" font-family="Tajawal" font-size="11" font-weight="800" fill="#1B2A41">فريق نعاون</text>
+    <text x="60" y="64" text-anchor="middle" font-family="Tajawal" font-size="20" font-weight="900" fill="#C9A227">معتمد</text>
+    <text x="60" y="82" text-anchor="middle" font-family="Tajawal" font-size="9" font-weight="800" fill="#1B2A41" letter-spacing="2">APPROVED</text>
+    <text x="60" y="96" text-anchor="middle" font-family="Tajawal" font-size="8" font-weight="700" fill="#1B2A41">سلطنة عُمان</text>
+  </svg>`;
+}
+
+function orderRow(o, i){
+  const dn = (o.driver || '---').toString();
+  const rc = o.image ? `<a class="rcpt no-print" href="${esc(o.image)}" target="_blank" rel="noopener" title="صورة الفاتورة">📎</a>` : '';
+  return `<tr class="order">
+    <td class="idx">${i}</td>
+    ${OPTS.group ? '' : `<td class="num" style="white-space:nowrap">${esc(o.date)}</td>`}
+    <td><span class="drv"><span class="av" style="background:${avColor(dn)}">${esc(initial(dn))}</span>${esc(dn)}</span></td>
+    <td class="det">${esc(o.details)}${rc}</td>
+    <td>${esc(o.location)}</td>
+    <td class="amt">${money(o.amount)}</td>
+  </tr>`;
+}
+
+function render(){
+  const root = document.getElementById('root');
+  if (!DATA || !DATA.orders || !DATA.orders.length){
+    document.getElementById('toolbar').style.display = 'none';
+    root.innerHTML = `<div class="empty"><div style="font-size:54px">🧾</div><h2>لا توجد بيانات فاتورة</h2>
+      <p>افتح لوحة الإدارة ← تبويب المطاعم، ثم اضغط زر <b>«عرض وطباعة الفاتورة»</b> للمطعم المطلوب.</p></div>`;
+    return;
+  }
+  CALC = compute(DATA);
+  const c = CALC;
+  const cols = OPTS.group ? 5 : 6;
+
+  // صفوف الجدول
+  let rows = '', i = 0;
+  if (OPTS.group){
+    c.dayList.forEach(day => {
+      rows += `<tr class="day"><td colspan="${cols-1}">📅 ${esc(prettyDay(day.date))}<span class="dmeta">· ${day.list.length} ${day.list.length === 1 ? 'طلب' : 'طلبات'}</span></td><td>${money(day.sum)}</td></tr>`;
+      day.list.forEach(o => rows += orderRow(o, ++i));
+    });
+  } else {
+    c.orders.forEach(o => rows += orderRow(o, ++i));
+  }
+
+  // ملخص المناديب
+  const maxSum = Math.max(...c.driverList.map(d => d.sum), 0.001);
+  const driversHtml = c.driverList.map(d => `
+    <div class="drow">
+      <span class="nm"><span class="av" style="background:${avColor(d.name)}">${esc(initial(d.name))}</span>${esc(d.name)} <span class="cnt">(${d.count})</span></span>
+      <div class="bar"><span style="width:${Math.max(4, d.sum / maxSum * 100).toFixed(1)}%"></span></div>
+      <span class="val">${money(d.sum)}</span>
+    </div>`).join('');
+
+  const paid = isPaid();
+  root.innerHTML = `
+  <div class="sheet ${paid ? 'is-paid' : ''}" id="invoiceArea">
+    <div class="paid-stamp">مدفوعة<small>PAID</small></div>
+    <div class="hero">
+      ${heroPattern()}
+      <div class="hero-row">
+        <div class="brand">
+          <div class="brand-logo"><img src="${LOGO}" crossorigin="anonymous" alt="شعار فريق نعاون"></div>
+          <div><h1>فريق نعاون</h1><p>لخدمات التوصيل · سلطنة عُمان</p></div>
         </div>
+        <div class="title-block">
+          <div class="t-ar">فاتورة</div>
+          <div class="t-en">PARTNER SETTLEMENT INVOICE</div>
+          <div class="inv-no"># ${esc(c.invNo)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="gold-rule"></div>
 
+    <div class="body">
+      <div class="meta">
+        <div class="cell"><div class="k">رقم الفاتورة</div><div class="v num">${esc(c.invNo)}</div></div>
+        <div class="cell"><div class="k">تاريخ الإصدار</div><div class="v">${esc(shortFmt.format(c.issued))}</div></div>
+        <div class="cell"><div class="k">فترة الفاتورة</div><div class="v" style="font-size:12.5px">${esc(periodText())}</div></div>
+        <div class="cell"><div class="k">الحالة</div><div class="v">${paid
+            ? '<span class="status paid"><i></i>مدفوعة</span>'
+            : '<span class="status due"><i></i>مستحقة الدفع</span>'}</div></div>
+      </div>
+
+      <div class="parties">
+        <div class="party"><div class="lbl">صادرة من</div><div class="name">فريق نعاون لخدمات التوصيل</div><div class="sub">سلطنة عُمان · إدارة الحسابات</div></div>
+        <div class="party to"><div class="lbl">صادرة إلى (الشريك)</div><div class="name">🏪 ${esc(DATA.restaurantName)}</div><div class="sub">شريك توصيل معتمد</div></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi main"><div class="k">الإجمالي المستحق</div><div class="v">${money(c.total)}</div></div>
+        <div class="kpi"><div class="k">عدد الطلبات</div><div class="v num">${c.orders.length}</div><div class="s">خلال ${c.dayList.length} ${c.dayList.length === 1 ? 'يوم' : 'أيام'} عمل</div></div>
+        <div class="kpi"><div class="k">متوسط قيمة الطلب</div><div class="v">${money(c.avg)}</div></div>
+        <div class="kpi"><div class="k">أعلى يوم</div><div class="v" style="font-size:17px">${money(c.best ? c.best.sum : 0)}</div><div class="s">${c.best ? esc(prettyShort(c.best.date)) : '-'}</div></div>
+      </div>
+
+      <div class="sec-title"><h3>تفاصيل الطلبات</h3><span class="line"></span><span class="badge">${c.orders.length} طلب</span></div>
+      <div class="table-wrap">
         <table>
-            <thead>
-                <tr>
-                    <th style="width: 5%;">م</th>
-                    <th style="width: 15%;">التاريخ</th>
-                    <th style="width: 20%;">المندوب</th>
-                    <th style="width: 30%;">تفاصيل الطلب</th>
-                    <th style="width: 15%;">مكان التوصيل</th>
-                    <th style="width: 15%;">المبلغ (ر.ع)</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- سيتم حقن البيانات هنا تلقائياً -->
-            </tbody>
+          <thead><tr>
+            <th style="text-align:center">#</th>
+            ${OPTS.group ? '' : '<th>التاريخ</th>'}
+            <th>المندوب</th><th>تفاصيل الطلب</th><th>مكان التوصيل</th><th>المبلغ</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
         </table>
+      </div>
 
-        <div class="summary-box">
-            <p><b>إجمالي عدد الطلبات للفترة المحددة:</b> <strong id="valOrdersCount" style="color:var(--dark);">0</strong> طلبات</p>
-            <h3>الإجمالي المستحق للمطعم: <span id="valTotal">0.000</span> ر.ع</h3>
+      <div class="bottom">
+        <div class="card drivers-card"><h4>🛵 ملخص المناديب</h4>${driversHtml}</div>
+        <div class="card totals">
+          <h4>💰 ملخص الحساب</h4>
+          <div class="trow"><span>عدد الطلبات</span><b class="num">${c.orders.length}</b></div>
+          <div class="trow"><span>عدد المناديب</span><b class="num">${c.driverList.length}</b></div>
+          <div class="trow"><span>المجموع الفرعي</span><b>${money(c.total)}</b></div>
+          <div class="grand"><div class="k">الإجمالي المستحق للمطعم</div><div class="v">${money(c.total)}</div></div>
+          <div class="words">${esc(amountInWords(c.total))}</div>
         </div>
+      </div>
 
-        <div class="footer">
-            <p>صدرت هذه الفاتورة آلياً من النظام الإلكتروني لفريق نعاون لخدمات التوصيل، وتعتبر وثيقة رسمية للمطابقة.</p>
-            <p>للتواصل والاستفسار ومراجعة الحسابات، يرجى التواصل مع إدارة الفريق.</p>
+      <div class="notes-wrap">
+        <div class="notes-lbl">📝 ملاحظات</div>
+        <div class="notes" id="notes" contenteditable="true" data-ph="اكتب أي ملاحظة تظهر في الفاتورة (اضغط هنا للكتابة)..."></div>
+      </div>
+
+      <div class="verify">
+        <div class="qr" id="qr"></div>
+        <div class="txt">
+          <h5>🔒 فاتورة إلكترونية موثّقة</h5>
+          <p>صدرت هذه الفاتورة آلياً من النظام الإلكتروني لفريق نعاون وتُعد وثيقة رسمية للمطابقة.
+          امسح الرمز للاطلاع على ملخص الفاتورة. لأي استفسار يرجى التواصل مع إدارة الفريق.</p>
         </div>
+        <div class="sign">
+          <div class="seal">${sealSvg()}</div>
+          <div class="line">توقيع واعتماد الإدارة</div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // سحب البيانات من الذاكرة المؤقتة التي أرسلها ملف index.html
-            const dataStr = localStorage.getItem('printInvoiceData');
-            
-            if (!dataStr) {
-                alert("لم يتم العثور على بيانات الفاتورة! الرجاء العودة للوحة الإدارة والضغط على زر الطباعة من هناك.");
-                return;
-            }
+    <div class="foot">
+      <span>شكراً لشراكتكم مع <b>فريق نعاون</b> 🤝</span>
+      <span class="num">${esc(c.invNo)} · ${c.orders.length} orders</span>
+    </div>
+  </div>`;
 
-            const data = JSON.parse(dataStr);
+  // الملاحظات المحفوظة
+  const notesEl = document.getElementById('notes');
+  try { notesEl.innerText = localStorage.getItem('nwNotes_' + c.invNo) || ''; } catch(e){}
+  notesEl.addEventListener('input', () => { try { localStorage.setItem('nwNotes_' + c.invNo, notesEl.innerText); } catch(e){} });
 
-            // تعبئة البيانات في النصوص
-            document.getElementById('valRestName').innerText = data.restaurantName;
-            document.getElementById('valPrintDate').innerText = data.printDate;
-            document.getElementById('valPeriod').innerText = data.period;
-            document.getElementById('valOrdersCount').innerText = data.ordersCount;
-            document.getElementById('valTotal').innerText = data.total;
+  applyOpts();
+  drawQR();
+}
 
-            // بناء الجدول
-            const tbody = document.getElementById('tableBody');
-            let rowsHtml = '';
+function drawQR(){
+  const el = document.getElementById('qr');
+  if (!el) return;
+  if (typeof QRCode === 'undefined'){ setTimeout(drawQR, 150); return; }
+  el.innerHTML = '';
+  // المكتبة تحسب طول النص العربي خطأ، لذلك نحوّله إلى بايتات UTF-8 أولاً
+  const utf8 = unescape(encodeURIComponent(summaryText(true)));
+  try {
+    new QRCode(el, {text: utf8, width: 220, height: 220, colorDark: '#0E1A2B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L});
+  } catch(e){
+    el.innerHTML = '';
+    new QRCode(el, {text: CALC.invNo + ' | ' + fmt.format(CALC.total) + ' OMR', width: 220, height: 220, colorDark: '#0E1A2B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L});
+  }
+}
 
-            data.orders.forEach(order => {
-                rowsHtml += `
-                    <tr>
-                        <td>${order.index}</td>
-                        <td dir="ltr">${order.date}</td>
-                        <td>${order.driver}</td>
-                        <td>${order.details}</td>
-                        <td>${order.location}</td>
-                        <td style="font-weight: bold; color: #27ae60;">${order.price}</td>
-                    </tr>
-                `;
-            });
+function applyOpts(){
+  const stage = document.getElementById('stage');
+  stage.classList.toggle('hide-drivers', !OPTS.drivers);
+  stage.classList.toggle('hide-qr', !OPTS.qr);
+  stage.classList.toggle('hide-notes', !OPTS.notes);
+  document.querySelectorAll('#toggles .chip').forEach(ch => {
+    const k = ch.dataset.opt;
+    ch.classList.toggle('on', k === 'paid' ? (CALC && isPaid()) : !!OPTS[k]);
+  });
+}
 
-            tbody.innerHTML = rowsHtml;
+document.getElementById('toggles').addEventListener('click', e => {
+  const ch = e.target.closest('.chip'); if (!ch) return;
+  const k = ch.dataset.opt;
+  if (k === 'paid'){
+    try { isPaid() ? localStorage.removeItem('nwPaid_' + CALC.invNo) : localStorage.setItem('nwPaid_' + CALC.invNo, '1'); } catch(e){}
+    render(); toast(isPaid() ? 'تم تمييز الفاتورة كمدفوعة ✅' : 'تم إرجاع الفاتورة إلى مستحقة');
+    return;
+  }
+  OPTS[k] = !OPTS[k]; saveOpts();
+  if (k === 'group') render(); else applyOpts();
+});
 
-            // فتح نافذة الطباعة تلقائياً بعد ترتيب الصفحة بنصف ثانية
-            setTimeout(() => {
-                window.print();
-            }, 600);
-        });
-    </script>
+/* ================= الملخص / المشاركة ================= */
+function summaryText(short){
+  const c = CALC;
+  const lines = [
+    '🧾 فاتورة فريق نعاون لخدمات التوصيل',
+    'رقم الفاتورة: ' + c.invNo,
+    'المطعم: ' + DATA.restaurantName,
+    'الفترة: ' + periodText(),
+    'عدد الطلبات: ' + c.orders.length,
+    'الإجمالي المستحق: ' + fmt.format(c.total) + ' ر.ع (OMR)',
+    'الحالة: ' + (isPaid() ? 'مدفوعة' : 'مستحقة الدفع')
+  ];
+  if (!short){
+    lines.push('', amountInWords(c.total), '', 'شكراً لشراكتكم 🤝');
+  }
+  return lines.join('\n');
+}
+function shareWhatsApp(){ window.open('https://wa.me/?text=' + encodeURIComponent(summaryText(false)), '_blank'); }
+async function copySummary(){
+  try { await navigator.clipboard.writeText(summaryText(false)); toast('تم نسخ ملخص الفاتورة 📋'); }
+  catch(e){ toast('تعذّر النسخ'); }
+}
+
+/* ================= الطباعة و PDF ================= */
+function doPrint(){ window.print(); }
+
+async function downloadPDF(){
+  if (typeof html2pdf === 'undefined'){ toast('جاري تحميل المكتبة، حاول بعد ثانية...'); return; }
+  const btn = document.getElementById('pdfBtn');
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ جاري التجهيز...';
+  const stage = document.getElementById('stage');
+  stage.classList.add('pdf-mode');
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    // تثبيت لون رمز الريال (مكتبة PDF لا تقرأ currentColor)
+    document.querySelectorAll('#invoiceArea svg.omr').forEach(s => s.setAttribute('fill', getComputedStyle(s).color));
+    await html2pdf().set({
+      margin: [6, 0, 6, 0],
+      filename: `فاتورة_${DATA.restaurantName}_${CALC.invNo}.pdf`,
+      image: {type: 'jpeg', quality: 0.97},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 840},
+      jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
+      pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.card', '.verify', '.kpis', '.parties']}
+    }).from(document.getElementById('invoiceArea')).save();
+    toast('تم تحميل الفاتورة ✅');
+  } catch(e){
+    toast('حدث خطأ أثناء إنشاء PDF');
+  } finally {
+    stage.classList.remove('pdf-mode');
+    btn.disabled = false; btn.innerHTML = label;
+  }
+}
+
+render();
+</script>
 </body>
 </html>
