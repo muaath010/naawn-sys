@@ -210,6 +210,7 @@ tr{page-break-inside:avoid;break-inside:avoid}
 .pdf-mode .table-wrap{overflow:visible}
 .pdf-mode .no-print{display:none!important}
 .pdf-mode .notes:empty{display:none}
+.html2pdf__container .sheet{width:100%!important;max-width:none!important}
 
 /* ===== الطباعة ===== */
 @media print{
@@ -592,6 +593,37 @@ async function copySummary(){
 /* ================= الطباعة و PDF ================= */
 function doPrint(){ window.print(); }
 
+// ترقيم الصفحات يدوياً قبل إنشاء PDF: أي عنصر يعبر حد الصفحة يُنقل للصفحة التالية
+// ويتكرر رأس الجدول أعلى الصفحة الجديدة، فلا تنقطع الأسطر أو النصوص أبداً
+const PDF_MARGIN = 6;
+function paginateForPdf(root, selector, marginMm){
+  const pageH = root.offsetWidth * (297 - marginMm * 2) / 210;
+  const els = [...root.querySelectorAll(selector)].filter(el => !el.closest('thead'));
+  for (const el of els){
+    const base = root.getBoundingClientRect().top;
+    const r = el.getBoundingClientRect();
+    if (!r.height || r.height >= pageH * 0.9) continue;
+    const top = r.top - base;
+    // العناوين وصفوف الأيام تبقى مع ما بعدها
+    const extra = el.classList.contains('sec-title') ? 110 : (el.classList.contains('day') ? 45 : 0);
+    const bottom = (r.bottom - base) + extra;
+    const p1 = Math.floor(top / pageH), p2 = Math.floor((bottom - 1) / pageH);
+    if (p1 === p2) continue;
+    const gap = (p1 + 1) * pageH - top + 6;
+    if (el.tagName === 'TR'){
+      const sp = document.createElement('tr');
+      sp.innerHTML = `<td colspan="20" style="height:${gap}px;padding:0;border:0;background:#fff"></td>`;
+      el.parentNode.insertBefore(sp, el);
+      const head = el.closest('table').querySelector('thead tr');
+      if (head) el.parentNode.insertBefore(head.cloneNode(true), el);
+    } else {
+      const sp = document.createElement('div');
+      sp.style.height = gap + 'px';
+      el.parentNode.insertBefore(sp, el);
+    }
+  }
+}
+
 async function downloadPDF(){
   if (typeof html2pdf === 'undefined'){ toast('جاري تحميل المكتبة، حاول بعد ثانية...'); return; }
   const btn = document.getElementById('pdfBtn');
@@ -604,13 +636,18 @@ async function downloadPDF(){
     // تثبيت لون رمز الريال (مكتبة PDF لا تقرأ currentColor)
     document.querySelectorAll('#invoiceArea svg.omr').forEach(s => s.setAttribute('fill', getComputedStyle(s).color));
     await html2pdf().set({
-      margin: [6, 0, 6, 0],
+      margin: [PDF_MARGIN, 0, PDF_MARGIN, 0],
       filename: `فاتورة_${DATA.restaurantName}_${CALC.invNo}.pdf`,
       image: {type: 'jpeg', quality: 0.97},
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 840},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff'},
       jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
-      pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.card', '.verify', '.kpis', '.parties']}
-    }).from(document.getElementById('invoiceArea')).save();
+      pagebreak: {mode: ['legacy']}
+    }).from(document.getElementById('invoiceArea')).toContainer().get('container').then(container => {
+      // نفس خيارات العرض (إخفاء QR/المناديب...) + ترقيم الصفحات على النسخة المرسومة
+      container.classList.add(...stage.classList);
+      container.style.direction = 'rtl';
+      paginateForPdf(container, '.meta, .parties, .kpis, .sec-title, tr, .bottom, .notes-wrap, .verify, .foot', PDF_MARGIN);
+    }).save();
     toast('تم تحميل الفاتورة ✅');
   } catch(e){
     toast('حدث خطأ أثناء إنشاء PDF');

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0E1A2B">
+<title>تقرير أداء الكباتن - فريق نعاون</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --ink:#0E1A2B; --ink-2:#1B2A41; --ink-3:#2A3B57;
+  --gold:#C9A227; --gold-2:#E6C65C; --gold-soft:#FBF6E6; --gold-line:#EADFB8;
+  --paper:#FFFFFF; --bg:#EEF1F6; --text:#1F2937; --muted:#6B7280; --line:#ECEEF2;
+  --green:#0F8A5F; --green-soft:#E7F6EF; --red:#C0392B; --red-soft:#FCECEA; --blue:#2471A3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;line-height:1.45}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.omr{display:inline-block;width:1.25em;height:.72em;vertical-align:-.04em;fill:currentColor}
+.money{display:inline-flex;align-items:baseline;gap:.28em;direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* شريط الأدوات */
+.toolbar{position:sticky;top:0;z-index:50;background:rgba(14,26,43,.96);backdrop-filter:blur(8px);color:#fff;
+  padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.btn{font-family:inherit;font-weight:700;font-size:14px;border:none;border-radius:999px;padding:9px 16px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;transition:transform .15s;color:var(--ink);background:#fff}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-2))}
+.hint{font-size:12px;color:#9fb0c8;width:100%;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:.3s;z-index:99;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* الورقة */
+.stage{padding:28px 16px 60px}
+.sheet{width:100%;max-width:210mm;margin:0 auto;background:var(--paper);border-radius:18px;overflow:hidden;
+  box-shadow:0 30px 60px -20px rgba(14,26,43,.35),0 0 0 1px rgba(14,26,43,.04)}
+.hero{position:relative;background:radial-gradient(120% 140% at 0% 0%,var(--ink-3) 0%,var(--ink) 55%);color:#fff;padding:28px 34px 24px;overflow:hidden}
+.hero-pattern{position:absolute;inset:0;opacity:.13;pointer-events:none}
+.hero-row{position:relative;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:68px;height:68px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--gold),var(--gold-2));flex-shrink:0}
+.brand-logo img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#fff}
+.brand h1{margin:0;font-size:25px;font-weight:900}
+.brand p{margin:3px 0 0;color:var(--gold-2);font-weight:700;font-size:14px}
+.title-block{text-align:left}
+.title-block .t-ar{font-size:34px;font-weight:900;line-height:1.15;background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.title-block .t-en{font-size:10.5px;letter-spacing:3.5px;color:#9fb0c8;margin-top:6px;font-weight:700}
+.gold-rule{height:4px;background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--gold))}
+.body{padding:24px 34px 10px}
+
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.meta .cell{background:#F8F9FB;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.meta .k{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.meta .v{font-size:14px;font-weight:800;color:var(--ink)}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kpi{border-radius:14px;padding:14px;border:1px solid var(--line);background:#fff;position:relative;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.kpi::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--accent,var(--gold))}
+.kpi.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.kpi .k{font-size:11.5px;font-weight:800;color:var(--muted);margin-bottom:6px}
+.kpi.main .k{color:#9fb0c8}
+.kpi .v{font-size:21px;font-weight:900;line-height:1.2}
+.kpi.main .v{color:var(--gold-2)}
+.kpi .s{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
+.kpi.main .s{color:#9fb0c8}
+
+.cmp{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.cmp small{font-weight:700;opacity:.85;direction:ltr;unicode-bidi:isolate}
+.cmp.up{background:var(--green-soft);color:var(--green)}
+.cmp.down{background:var(--red-soft);color:var(--red)}
+.cmp.flat{background:#f1f3f8;color:#888}
+.cmp-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
+.cmp-row .pv{font-size:11px;color:var(--muted);font-weight:700}
+.kpi.main .cmp-row .pv{color:#9fb0c8}
+
+.podium{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.pod{border-radius:14px;padding:14px 16px;break-inside:avoid;page-break-inside:avoid}
+.pod.top{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2c00}
+.pod.low{background:#fff;border:1.5px dashed #E3B5AE;color:#5a2a24}
+.pod .tag{font-size:12px;font-weight:900;opacity:.8;margin-bottom:6px}
+.pod .who{font-size:18px;font-weight:900}
+.pod .cnt{margin-top:6px;font-size:13px;font-weight:800}
+.pod .cnt b{font-size:20px}
+
+.sec-title{display:flex;align-items:center;gap:10px;margin:6px 0 10px;break-after:avoid;page-break-after:avoid}
+.sec-title h3{margin:0;font-size:16px;font-weight:900;color:var(--ink)}
+.sec-title .line{flex:1;height:1px;background:var(--line)}
+.sec-title .badge{font-size:12px;font-weight:800;color:var(--gold);background:var(--gold-soft);padding:3px 10px;border-radius:999px}
+.sec-title .sub{font-size:11.5px;color:var(--muted);font-weight:700}
+
+.table-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--ink);color:#fff;font-weight:800;padding:10px;text-align:right;font-size:12px;white-space:nowrap}
+tbody td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even) td{background:#FAFBFC}
+thead{display:table-header-group}
+tr{page-break-inside:avoid;break-inside:avoid}
+td.c{text-align:center}
+.rank{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:50%;background:#F1F3F8;font-weight:900;font-size:12px}
+.nm{font-weight:800;color:var(--ink)}
+.lvl{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap}
+.bar{height:7px;border-radius:99px;background:#EEF0F4;overflow:hidden;min-width:70px}
+.bar span{display:block;height:100%;border-radius:99px}
+.pct{font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+
+.cmp-table td:first-child{font-weight:800}
+.movers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.mv-col{background:#F8F9FB;border:1px solid var(--line);border-radius:12px;padding:12px;break-inside:avoid;page-break-inside:avoid}
+.mv-h{font-weight:900;font-size:13px;margin-bottom:8px;color:var(--ink)}
+.mv{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:3px 0}
+
+.note{font-size:11.5px;color:var(--muted);margin:-10px 0 20px;font-weight:600}
+.foot{margin-top:10px;background:var(--ink);color:#9fb0c8;padding:14px 34px;display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:12px;flex-wrap:wrap}
+.foot b{color:var(--gold-2)}
+.empty{max-width:520px;margin:80px auto;text-align:center;background:#fff;border-radius:18px;padding:40px 30px;box-shadow:0 20px 50px -20px rgba(0,0,0,.25)}
+
+@media (max-width:720px){
+  .toolbar{position:static}
+  .stage{padding:14px 8px 40px}
+  .hero{padding:20px 18px}
+  .hero-row{flex-direction:column;align-items:flex-start}
+  .title-block{text-align:right}
+  .body{padding:18px 14px 6px}
+  .meta{grid-template-columns:1fr 1fr}
+  .kpis{grid-template-columns:1fr 1fr}
+  .podium,.movers{grid-template-columns:1fr}
+  .table-wrap{overflow-x:auto}
+  .foot{padding:14px 16px}
+}
+
+/* وضع تحميل PDF المباشر: عرض A4 ثابت */
+.pdf-mode .sheet{width:794px;max-width:794px;border-radius:0;box-shadow:none}
+.pdf-mode .meta{grid-template-columns:repeat(3,1fr)}
+.pdf-mode .kpis{grid-template-columns:repeat(3,1fr)}
+.pdf-mode .podium{grid-template-columns:1fr 1fr}
+.pdf-mode .movers{grid-template-columns:repeat(3,1fr)}
+.pdf-mode .hero-row{flex-direction:row;align-items:center}
+.pdf-mode .title-block{text-align:left}
+.pdf-mode .table-wrap{overflow:visible}
+.html2pdf__container .sheet{width:100%!important;max-width:none!important}
+
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  body{background:#fff}
+  .toolbar,.toast{display:none!important}
+  .stage{padding:0}
+  .sheet{max-width:none;width:100%;border-radius:0;box-shadow:none}
+  .meta{grid-template-columns:repeat(3,1fr)!important}
+  .kpis{grid-template-columns:repeat(3,1fr)!important}
+  .podium{grid-template-columns:1fr 1fr!important}
+  .movers{grid-template-columns:repeat(3,1fr)!important}
+  .hero-row{flex-direction:row!important;align-items:center!important}
+  .title-block{text-align:left!important}
+  .table-wrap{overflow:visible;border-radius:0}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar">
+  <button class="btn gold" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+  <button class="btn" id="pdfBtn" onclick="downloadPDF()">📥 تحميل PDF مباشر</button>
+  <div class="hint">للحصول على أوضح نتيجة: اضغط «طباعة / حفظ PDF» ثم اختر «حفظ بتنسيق PDF»</div>
+</div>
+
+<div class="stage" id="stage"><div id="root"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const LOGO = "https://i.imgur.com/nYQiffV.png";
+const OMR_PATH = "M259.9,219.89c-.63-49.2,11.44-95.41,35.76-137.75C331.7,19.4,371.24-.36,439.78,34.99c10.67,5.5,53.6,35.43,57.81,44.54,5.03,10.87-27.48,103.87-29.11,122.3-34.69-37.51-99.37-98.66-154.85-69.62-45.05,23.58-12.02,62.54,11.46,87.68h406.25l-39.14,70.23-289.2-2c-1.11,4.66.87,3.3,2.53,4.6,12.44,9.72,80.97,31.54,94.75,31.54l172.05,1.99-39.49,71.25H10.03l39.24-71.24h272.14l-37.11-36.13H69.33l39.23-70.23h151.33Z";
+const OMR = `<svg class="omr" viewBox="0 0 741.36 415.06" role="img" aria-label="ريال عماني"><path d="${OMR_PATH}"/></svg>`;
+const fmt = new Intl.NumberFormat('en-US', {minimumFractionDigits:3, maximumFractionDigits:3});
+const money = n => `<span class="money">${OMR}<span>${fmt.format(n || 0)}</span></span>`;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast = m => { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); };
+
+function delta(cur, prev, upGood = true, isMoney = false){
+  if (prev === null || prev === undefined) return '';
+  const diff = cur - prev;
+  if (Math.abs(diff) < 0.0005) return `<span class="cmp flat">● بدون تغيير</span>`;
+  const good = (diff > 0) === upGood;
+  const pct = prev > 0 ? Math.abs(diff / prev * 100).toFixed(1) + '%' : 'جديد';
+  const abs = isMoney ? fmt.format(Math.abs(diff)) : Math.abs(Math.round(diff * 10) / 10);
+  return `<span class="cmp ${good ? 'up' : 'down'}">${diff > 0 ? '▲' : '▼'} ${pct} <small>(${diff > 0 ? '+' : '-'}${abs})</small></span>`;
+}
+
+function level(o){
+  if (o >= 100) return {t:'متميز 🌟', c:'#9b59b6'};
+  if (o >= 50)  return {t:'جيد جداً 🟢', c:'#27ae60'};
+  if (o >= 20)  return {t:'متوسط 🟡', c:'#e69a0c'};
+  return {t:'ضعيف 📉', c:'#e74c3c'};
+}
+
+let D = null;
+try { D = JSON.parse(localStorage.getItem('printStatsData') || 'null'); } catch(e){}
+
+function render(){
+  const root = document.getElementById('root');
+  if (!D){
+    document.getElementById('toolbar').style.display = 'none';
+    root.innerHTML = `<div class="empty"><div style="font-size:54px">📊</div><h2>لا توجد بيانات تقرير</h2>
+      <p style="color:#6B7280;line-height:1.8">افتح لوحة الإدارة ← «عرض إحصائيات ومستويات المناديب» ثم اضغط زر التقرير.</p></div>`;
+    return;
+  }
+  const V = D.vis || {}, T = D.totals, P = (D.prev && !D.prev.empty) ? D.prev : null;
+  const on = k => V[k] !== false;
+  const issued = new Date(D.issuedAt || Date.now()).toLocaleDateString('ar-OM-u-nu-latn', {day:'numeric', month:'long', year:'numeric'});
+  const cmpLine = (cur, prev, prevTxt, upGood = true, isMoney = false) =>
+    P ? `<div class="cmp-row">${delta(cur, prev, upGood, isMoney)}<span class="pv">السابق: ${prevTxt}</span></div>` : '';
+
+  // ===== المؤشرات =====
+  let kpis = '';
+  if (on('totalOrders')) kpis += `<div class="kpi main"><div class="k">📦 إجمالي الطلبات</div><div class="v num">${T.orders.toLocaleString('en-US')}</div>
+      <div class="s">من ${T.entries} عملية تسجيل</div>${cmpLine(T.orders, P && P.orders, P ? P.orders.toLocaleString('en-US') : '')}</div>`;
+  if (on('revenue')) kpis += `<div class="kpi" style="--accent:#27ae60"><div class="k">💰 إجمالي المحصّل من الطلبات</div><div class="v" style="color:#1e8f4e">${money(T.revenue)}</div>
+      ${cmpLine(T.revenue, P && P.revenue, P ? money(P.revenue) : '', true, true)}</div>`;
+  if (on('deductions')) kpis += `<div class="kpi" style="--accent:#e74c3c"><div class="k">📉 إجمالي الاستقطاع</div><div class="v" style="color:#c0392b">${money(T.deds)}</div>
+      ${cmpLine(T.deds, P && P.deds, P ? money(P.deds) : '', false, true)}</div>
+    <div class="kpi" style="--accent:#3498db"><div class="k">🧮 الصافي العام</div><div class="v" style="color:var(--blue)">${money(T.net)}</div>
+      ${cmpLine(T.net, P && P.net, P ? money(P.net) : '', true, true)}</div>`;
+  if (on('captains')) kpis += `<div class="kpi" style="--accent:#9b59b6"><div class="k">🛵 الكباتن النشطين</div><div class="v num">${T.active}</div>
+      <div class="s">متوسط ${T.avg.toFixed(1)} طلب لكل كابتن</div>${cmpLine(T.active, P && P.active, P ? P.active : '')}</div>`;
+
+  // ===== أعلى / أقل =====
+  let podium = '';
+  if (T.active && (on('top') || on('low'))){
+    podium = `<div class="podium">
+      ${on('top') ? `<div class="pod top"><div class="tag">👑 أعلى كابتن طلبات</div><div class="who">${esc(D.top.names.join('، '))}</div>
+        <div class="cnt"><b class="num">${D.top.orders}</b> طلب${T.orders ? ` · ${(D.top.orders / T.orders * 100).toFixed(1)}% من الإجمالي` : ''}</div></div>` : ''}
+      ${on('low') ? `<div class="pod low"><div class="tag">🔻 أقل كابتن طلبات</div><div class="who">${esc(D.low.names.join('، '))}</div>
+        <div class="cnt"><b class="num">${D.low.orders}</b> طلب${T.avg ? ` · أقل من المتوسط بـ ${Math.max(0, T.avg - D.low.orders).toFixed(1)}` : ''}</div></div>` : ''}
+    </div>`;
+  }
+
+  // ===== المقارنة =====
+  let compare = '';
+  if (on('compare') && D.prev){
+    if (!P){
+      compare = `<div class="sec-title"><h3>📊 المقارنة مع ${esc(D.prev.label)}</h3><span class="line"></span></div>
+        <p class="note" style="margin:0 0 20px">لا توجد بيانات مسجلة في الفترة السابقة (${esc(D.prev.sub)}) للمقارنة.</p>`;
+    } else {
+      const r = (k, label, cur, prev, curT, prevT, upGood = true, isMoney = false) => on(k)
+        ? `<tr><td>${label}</td><td style="font-weight:900">${curT}</td><td style="color:#6B7280">${prevT}</td><td>${delta(cur, prev, upGood, isMoney)}</td></tr>` : '';
+      const mv = (arr, cls) => arr && arr.length
+        ? arr.map(m => `<div class="mv"><span>${esc(m.n)}</span><span class="cmp ${cls}">${m.diff > 0 ? '▲ +' : '▼ '}${m.diff} <small>(${m.p} → ${m.c})</small></span></div>`).join('')
+        : '<div class="mv" style="color:#aaa">لا يوجد</div>';
+      compare = `
+        <div class="sec-title"><h3>📊 المقارنة مع ${esc(P.label)}</h3><span class="line"></span><span class="sub">${esc(P.sub)}</span></div>
+        ${P.exact ? '' : '<p class="note">* مقارنة تقديرية محسوبة من الأرشيف لفترة مساوية الطول قبل بداية الدورة الحالية.</p>'}
+        <div class="table-wrap"><table class="cmp-table">
+          <thead><tr><th>المؤشر</th><th>الحالية</th><th>السابقة</th><th>التغيّر</th></tr></thead>
+          <tbody>
+            ${r('totalOrders', '📦 الطلبات', T.orders, P.orders, T.orders.toLocaleString('en-US'), P.orders.toLocaleString('en-US'))}
+            ${r('revenue', '💰 المحصّل', T.revenue, P.revenue, money(T.revenue), money(P.revenue), true, true)}
+            ${r('deductions', '📉 الاستقطاع', T.deds, P.deds, money(T.deds), money(P.deds), false, true)}
+            ${r('deductions', '🧮 الصافي', T.net, P.net, money(T.net), money(P.net), true, true)}
+            ${r('captains', '🛵 الكباتن النشطين', T.active, P.active, T.active, P.active)}
+            ${r('captains', '⚖️ متوسط الطلبات للكابتن', +T.avg.toFixed(1), +P.avg.toFixed(1), T.avg.toFixed(1), P.avg.toFixed(1))}
+          </tbody></table></div>
+        ${on('driverOrders') ? `<div class="movers">
+          <div class="mv-col"><div class="mv-h">🚀 الأكثر تحسّناً</div>${mv(D.movers.up, 'up')}</div>
+          <div class="mv-col"><div class="mv-h">⚠️ الأكثر تراجعاً</div>${mv(D.movers.down, 'down')}</div>
+          ${on('top') ? `<div class="mv-col"><div class="mv-h">👑 أعلى كابتن في السابق</div>${D.movers.prevTop
+              ? `<div class="mv"><span>${esc(D.movers.prevTop.name)}</span><b>${D.movers.prevTop.orders} طلب</b></div>` : '<div class="mv" style="color:#aaa">لا يوجد</div>'}</div>` : ''}
+        </div>` : ''}`;
+    }
+  }
+
+  // ===== جدول الكباتن =====
+  let table = '';
+  if (on('list') && D.drivers.length){
+    const showO = on('driverOrders'), showM = on('driverMoney'), showC = showO && P;
+    const maxO = Math.max(...D.drivers.map(d => d.orders), 1);
+    const medals = ['🥇','🥈','🥉'];
+    const rows = D.drivers.map((d, i) => {
+      const L = level(d.orders);
+      const pct = T.orders ? (d.orders / T.orders * 100).toFixed(1) : '0.0';
+      return `<tr>
+        <td class="c"><span class="rank">${medals[i] || (i + 1)}</span></td>
+        <td class="nm">${esc(d.name)}</td>
+        <td><span class="lvl" style="background:${L.c}1f;color:${L.c};border:1px solid ${L.c}">${L.t}</span></td>
+        ${showO ? `<td class="c num" style="font-weight:900;color:${L.c};font-size:14px">${d.orders}</td>
+          <td><div class="bar"><span style="width:${(d.orders / maxO * 100).toFixed(1)}%;background:${L.c}"></span></div><div class="pct">${pct}%</div></td>` : ''}
+        ${showC ? `<td>${delta(d.orders, d.prevOrders)}</td>` : ''}
+        ${showM ? `<td style="color:#1e8f4e;font-weight:800">${money(d.revenue)}</td><td style="color:var(--blue);font-weight:800">${money(d.revenue - d.deds)}</td>` : ''}
+      </tr>`;
+    }).join('');
+    table = `
+      <div class="sec-title"><h3>🏅 ترتيب ومستويات الكباتن</h3><span class="line"></span><span class="badge">${D.drivers.length} كابتن</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th style="text-align:center">#</th><th>الكابتن</th><th>المستوى</th>
+          ${showO ? '<th style="text-align:center">الطلبات</th><th>النسبة</th>' : ''}
+          ${showC ? '<th>مقارنة بالسابق</th>' : ''}
+          ${showM ? '<th>المحصّل</th><th>الصافي</th>' : ''}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <p class="note">المستويات: متميز (100+ طلب) · جيد جداً (50+) · متوسط (20+) · ضعيف (أقل من 20)</p>`;
+  }
+
+  root.innerHTML = `
+  <div class="sheet" id="reportArea">
+    <div class="hero">
+      <svg class="hero-pattern" width="100%" height="100%" aria-hidden="true"><defs><pattern id="pt" width="38" height="38" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="38" height="38" fill="none" stroke="#E6C65C" stroke-width="1"/><circle cx="19" cy="19" r="4" fill="none" stroke="#E6C65C" stroke-width="1"/></pattern></defs>
+        <rect width="100%" height="100%" fill="url(#pt)"/></svg>
+      <div class="hero-row">
+        <div class="brand">
+          <div class="brand-logo"><img src="${LOGO}" crossorigin="anonymous" alt="شعار فريق نعاون"></div>
+          <div><h1>فريق نعاون</h1><p>لخدمات التوصيل · سلطنة عُمان</p></div>
+        </div>
+        <div class="title-block"><div class="t-ar">تقرير أداء الكباتن</div><div class="t-en">CAPTAINS PERFORMANCE REPORT</div></div>
+      </div>
+    </div>
+    <div class="gold-rule"></div>
+    <div class="body">
+      <div class="meta">
+        <div class="cell"><div class="k">الفترة</div><div class="v">${esc(D.rangeLabel)}</div></div>
+        <div class="cell"><div class="k">تاريخ التقرير</div><div class="v">${esc(issued)}</div></div>
+        <div class="cell"><div class="k">عدد الكباتن</div><div class="v num">${D.drivers.length}</div></div>
+      </div>
+      ${kpis ? `<div class="kpis">${kpis}</div>` : ''}
+      ${podium}
+      ${compare}
+      ${table}
+    </div>
+    <div class="foot"><span>صدر هذا التقرير آلياً من نظام <b>فريق نعاون</b> لخدمات التوصيل</span><span>${esc(issued)}</span></div>
+  </div>`;
+}
+
+// ترقيم الصفحات يدوياً قبل إنشاء PDF: أي عنصر يعبر حد الصفحة يُنقل للصفحة التالية
+// ويتكرر رأس الجدول أعلى الصفحة الجديدة، فلا تنقطع الأسطر أو النصوص أبداً
+function paginateForPdf(root, selector, marginMm){
+  const pageH = root.offsetWidth * (297 - marginMm * 2) / 210;
+  const added = [];
+  const els = [...root.querySelectorAll(selector)].filter(el => !el.closest('thead'));
+  for (const el of els){
+    const base = root.getBoundingClientRect().top;
+    const r = el.getBoundingClientRect();
+    if (!r.height || r.height >= pageH * 0.9) continue;
+    const top = r.top - base;
+    // العناوين تبقى مع المحتوى الذي بعدها
+    const bottom = (r.bottom - base) + (el.classList.contains('sec-title') ? 110 : 0);
+    const p1 = Math.floor(top / pageH), p2 = Math.floor((bottom - 1) / pageH);
+    if (p1 === p2) continue;
+    const gap = (p1 + 1) * pageH - top + 6;
+    if (el.tagName === 'TR'){
+      const sp = document.createElement('tr');
+      sp.className = 'pdf-spacer';
+      sp.innerHTML = `<td colspan="20" style="height:${gap}px;padding:0;border:0;background:#fff"></td>`;
+      el.parentNode.insertBefore(sp, el); added.push(sp);
+      const head = el.closest('table').querySelector('thead tr');
+      if (head){ const h = head.cloneNode(true); h.className = 'pdf-spacer'; el.parentNode.insertBefore(h, el); added.push(h); }
+    } else {
+      const sp = document.createElement('div');
+      sp.className = 'pdf-spacer'; sp.style.height = gap + 'px';
+      el.parentNode.insertBefore(sp, el); added.push(sp);
+    }
+  }
+  return () => added.forEach(n => n.remove());
+}
+
+// إنشاء PDF: نرقّم الصفحات على النسخة التي ترسمها المكتبة نفسها (وليس الصفحة الأصلية)
+const PDF_MARGIN = 6;
+function buildPdf(area, filename, selector){
+  const worker = html2pdf().set({
+    margin: [PDF_MARGIN, 0, PDF_MARGIN, 0],
+    filename,
+    image: {type: 'jpeg', quality: 0.97},
+    html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff'},
+    jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'},
+    pagebreak: {mode: ['legacy']}
+  }).from(area).toContainer().get('container').then(container => {
+    container.classList.add('pdf-mode');
+    container.style.direction = 'rtl';
+    paginateForPdf(container, selector, PDF_MARGIN);
+  });
+  return worker;
+}
+
+async function downloadPDF(){
+  if (typeof html2pdf === 'undefined'){ toast('جاري تحميل المكتبة، حاول بعد ثانية...'); return; }
+  const btn = document.getElementById('pdfBtn'), label = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ جاري التجهيز...';
+  const stage = document.getElementById('stage');
+  stage.classList.add('pdf-mode');
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const area = document.getElementById('reportArea');
+    area.querySelectorAll('svg.omr').forEach(s => s.setAttribute('fill', getComputedStyle(s).color));
+    await buildPdf(area, `تقرير_أداء_الكباتن_${new Date().toISOString().slice(0,10)}.pdf`,
+      '.meta, .kpis, .podium, .sec-title, .note, tr, .movers, .foot').save();
+    toast('تم تحميل التقرير ✅');
+  } catch(e){
+    toast('حدث خطأ أثناء إنشاء PDF');
+  } finally {
+    stage.classList.remove('pdf-mode');
+    btn.disabled = false; btn.innerHTML = label;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
